@@ -347,7 +347,11 @@ const translate: {
   python: [_toPython, toPythonWarn, supportedArgsPython],
   "python-http": [_toPythonHttp, toPythonHttpWarn, supportedArgsPythonHttp],
   "python-httpx": [_toPythonHttpx, toPythonHttpxWarn, supportedArgsPythonHttpx],
-  "python-curl-cffi": [_toPythonCurlCffi, toPythonCurlCffiWarn, supportedArgsPythonCurlCffi],
+  "python-curl-cffi": [
+    _toPythonCurlCffi,
+    toPythonCurlCffiWarn,
+    supportedArgsPythonCurlCffi,
+  ],
   "python-httpclient": [_toPythonHttp, toPythonHttpWarn, supportedArgsPythonHttp], // undocumented alias
   r: [_toR, toRWarn, supportedArgsR],
   "r-httr": [_toR, toRWarn, supportedArgsR], // undocumented alias
