@@ -117,6 +117,26 @@ Install the Python package with `pip install httpx` before running that code. Mu
 uploads and file-backed bodies or queries currently raise an error. Review
 conversion warnings for cURL options that have no HTTPX equivalent.
 
+### Convert one OB2 HTTP request block
+
+Save a single `BLOCK:HttpRequest` / `TYPE:STANDARD` / `ENDBLOCK` block
+to `request.ob2`, then choose an output:
+
+```sh
+curlconverter --input ob2 --language python - < request.ob2
+curlconverter --input ob2 --language python-httpx - < request.ob2
+curlconverter --input ob2 --language go - < request.ob2
+curlconverter --input ob2 --language curl - < request.ob2
+```
+
+The JavaScript API is `fromOb2(block, "python-httpx")`, or
+`ob2ToCurlArgs(block)` to inspect the parsed cURL arguments. This accepts
+literal URL, method, header and cookie fields with a standard body and content
+type, like the output of `curl_to_lolicode.py`. It rejects unknown fields,
+variables, other body types and multiple blocks. OB2 transport and browser
+profile settings do not transfer to these ordinary HTTP clients; generated
+code marks their omission for review.
+
 ### Usage as a library
 
 The JavaScript API is a bunch of functions that can take either a string of Bash code or an array of already-parsed arguments (like [`process.argv`](https://nodejs.org/docs/latest/api/process.html#processargv)) and return a string with the resulting program:
