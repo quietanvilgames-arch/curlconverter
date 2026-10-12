@@ -364,7 +364,7 @@ const translate: {
 };
 
 const USAGE = `Usage: curlconverter [--language <language>] [-] [curl_options...]
-       curlconverter --input ob2 --language <curl|python|python-httpx|go> [-]
+       curlconverter --input ob2 --language <curl|python|python-httpx|python-curl-cffi|go> [-]
 
 language: the language to convert the curl command to. The choices are
   ansible
@@ -527,9 +527,9 @@ if (inputMode === "ob2") {
       verbose,
     );
   }
-  if (!["curl", "python", "python-httpx", "go"].includes(language)) {
+  if (!["curl", "python", "python-httpx", "python-curl-cffi", "go"].includes(language)) {
     exitWithError(
-      new CCError("OB2 output must be curl, python, python-httpx, or go"),
+      new CCError("OB2 output must be curl, python, python-httpx, python-curl-cffi, or go"),
       verbose,
     );
   }
