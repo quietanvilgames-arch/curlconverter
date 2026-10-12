@@ -181,3 +181,14 @@ test("OB2 URL encoding handles literal bodies and checks booleans", (t) => {
   );
   t.end();
 });
+
+test("OB2 empty URL creates a blank URL input", (t) => {
+  const blankUrl = sample.replace("https://example.com/path?x=1", "");
+  const python = fromOb2(blankUrl, "python-httpx");
+  t.ok(python.includes('input_url = ""'));
+  t.ok(python.includes("input_url,"));
+  const go = fromOb2(blankUrl, "go");
+  t.ok(go.includes('inputUrl := ""'));
+  t.throws(() => fromOb2(blankUrl, "curl"), /cannot be represented/);
+  t.end();
+});

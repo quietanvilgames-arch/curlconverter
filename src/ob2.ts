@@ -210,10 +210,11 @@ function parseOb2(block: string): { args: string[]; settings: Ob2Settings } {
         throw new CCError("Unsupported OB2 field: " + field);
     }
   }
-  if (!standard || !url || body === undefined || contentType === undefined) {
+  if (!standard || url === undefined || body === undefined || contentType === undefined) {
     throw new CCError("OB2 block requires a URL and TYPE:STANDARD");
   }
-  if (!/^https?:\/\//.test(url)) {
+  if (url === "") url = "<input.URL>";
+  if (!/^https?:\/\//.test(url) && url !== "<input.URL>") {
     throw new CCError("OB2 URL must start with http:// or https://");
   }
   const args = ["curl", "--request", method, url];
