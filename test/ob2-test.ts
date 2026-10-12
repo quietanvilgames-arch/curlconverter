@@ -192,3 +192,50 @@ test("OB2 empty URL creates a blank URL input", (t) => {
   t.throws(() => fromOb2(blankUrl, "curl"), /cannot be represented/);
   t.end();
 });
+
+test("OB2 timeout, redirect count, response body and empty request body", (t) => {
+  const block = sample
+    .replace(
+      "  method = POST",
+      [
+        "  method = POST",
+        "  autoRedirect = True",
+        "  maxNumberOfRedirects = 4",
+        "  timeoutMilliseconds = 12500",
+        "  readResponseContent = False",
+      ].join("\n"),
+    );
+  const args = ob2ToCurlArgs(block);
+  t.ok(args.includes("--location"));
+  t.ok(args.includes("--max-redirs"));
+  t.ok(args.includes("4"));
+  t.ok(args.includes("--max-time"));
+  t.ok(args.includes("12.5"));
+  const python = fromOb2(block, "python");
+  t.ok(python.includes("client.max_redirects = 4"));
+  t.ok(python.includes("timeout=12.5"));
+  t.notOk(python.includes("print(response.text)"));
+  const httpx = fromOb2(block, "python-httpx");
+  t.ok(httpx.includes("max_redirects=4"));
+  t.ok(httpx.includes("timeout=12.5"));
+  t.notOk(httpx.includes("print(response.text)"));
+  const cffi = fromOb2(block, "python-curl-cffi");
+  t.ok(cffi.includes("max_redirects=4"));
+  t.ok(cffi.includes("timeout=12.5"));
+  const go = fromOb2(block, "go");
+  t.ok(go.includes("client.Timeout = 12500 * time.Millisecond"));
+  t.ok(go.includes("len(via) >= 4"));
+  t.notOk(go.includes("io.ReadAll"));
+  t.notOk(go.includes('"io"'));
+  t.throws(() => fromOb2(block, "curl"), /cannot preserve/);
+  t.throws(
+    () => ob2ToCurlArgs(block.replace("12500", "-1")),
+    /nonnegative integer/,
+  );
+  const empty = sample
+    .replace("  method = POST", "  method = GET\n  alwaysSendContent = True")
+    .replace(/^  \$".*"$/m, '  $""');
+  t.ok(ob2ToCurlArgs(empty).includes("--data-raw"));
+  t.ok(fromOb2(empty, "go").includes('strings.NewReader("")'));
+  t.end();
+});

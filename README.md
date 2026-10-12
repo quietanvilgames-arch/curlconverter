@@ -154,9 +154,11 @@ with a standard body and content type, like the output of `curl_to_lolicode.py`.
 It rejects unknown fields, other body types and multiple blocks. Interpolated
 header lists (`customHeaders = ${...}`) and placeholders such as
 `<input.USER>` generate blank target-language variables for Python and Go.
-Dynamic cURL output is not yet supported. Explicit `autoRedirect`,
-`ignoreCertificateValidation`, `urlEncodeContent`, and `httpVersion` options
-are applied to supported outputs. If `customCookies` and an explicit `Cookie`
+Dynamic cURL output is not yet supported. Explicit `autoRedirect`, `maxNumberOfRedirects`, `timeoutMilliseconds`,
+`alwaysSendContent`, `readResponseContent`, `ignoreCertificateValidation`,
+`urlEncodeContent`, and `httpVersion` options are applied to supported outputs.
+An explicitly disabled response read cannot currently be represented in cURL
+output and produces an error. If `customCookies` and an explicit `Cookie`
 header appear together, the explicit header takes precedence for this request.
 `python-curl-cffi` maps supported OB2 browser profiles (including
 `Safari260Ios` to `safari260_ios`) and respects `curlUseBrowserHeaders = False`.

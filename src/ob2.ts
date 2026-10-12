@@ -294,6 +294,9 @@ export function ob2ToCurlArgs(block: string): string[] {
 
 export function fromOb2(block: string, output: Ob2Output): string {
   const { args, settings } = parseOb2(block);
+  if (output === "curl" && settings.readResponseContent === false) {
+    throw new CCError("cURL output cannot preserve readResponseContent = False");
+  }
   const advanced =
     settings.autoRedirect !== undefined ||
     settings.maxNumberOfRedirects !== undefined ||

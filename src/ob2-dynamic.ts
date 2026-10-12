@@ -165,8 +165,15 @@ export function renderOb2Dynamic(
     if (httpx || cffi) {
       if (httpx) {
         code +=
-          "with httpx.Client(timeout=None, follow_redirects=" +
+          "with httpx.Client(timeout=" +
+          (settings.timeoutMilliseconds === undefined
+            ? "None"
+            : String(settings.timeoutMilliseconds / 1000)) +
+          ", follow_redirects=" +
           (settings.autoRedirect === true ? "True" : "False") +
+          (settings.maxNumberOfRedirects === undefined
+            ? ""
+            : ", max_redirects=" + settings.maxNumberOfRedirects) +
           (settings.httpVersion === "2.0" ? ", http2=True" : "") +
           (settings.ignoreCertificateValidation === true
             ? ", verify=False"
@@ -174,6 +181,11 @@ export function renderOb2Dynamic(
           ") as client:\n";
       } else {
         code += "with requests.Session() as client:\n";
+        if (settings.maxNumberOfRedirects !== undefined)
+          code +=
+            "    client.max_redirects = " +
+            settings.maxNumberOfRedirects +
+            "\n";
       }
       code += "    response = client.request(\n";
       code += "        " + reprStr(request.method) + ",\n";
@@ -189,6 +201,16 @@ export function renderOb2Dynamic(
           code +=
             "        verify=" +
             (settings.ignoreCertificateValidation ? "False" : "True") +
+            ",\n";
+        if (settings.timeoutMilliseconds !== undefined)
+          code +=
+            "        timeout=" +
+            settings.timeoutMilliseconds / 1000 +
+            ",\n";
+        if (settings.maxNumberOfRedirects !== undefined)
+          code +=
+            "        max_redirects=" +
+            settings.maxNumberOfRedirects +
             ",\n";
         if (settings.httpVersion)
           code +=
@@ -218,29 +240,54 @@ export function renderOb2Dynamic(
       }
       code += "    )\n";
     } else {
-      code += "response = requests.request(\n";
-      code += "    " + reprStr(request.method) + ",\n";
-      code += "    " + py(request.url) + ",\n";
-      if (request.headers.length) code += "    headers=headers,\n";
-      if (request.body !== undefined) code += "    data=" + body + ",\n";
+      const session = settings.maxNumberOfRedirects !== undefined;
+      if (session) {
+        code += "with requests.Session() as client:\n";
+        code +=
+          "    client.max_redirects = " +
+          settings.maxNumberOfRedirects +
+          "\n";
+      }
+      const indent = session ? "    " : "";
+      code +=
+        indent +
+        "response = " +
+        (session ? "client" : "requests") +
+        ".request(\n";
+      code += indent + "    " + reprStr(request.method) + ",\n";
+      code += indent + "    " + py(request.url) + ",\n";
+      if (request.headers.length) code += indent + "    headers=headers,\n";
+      if (request.body !== undefined)
+        code += indent + "    data=" + body + ",\n";
       if (settings.autoRedirect !== undefined)
         code +=
-          "    allow_redirects=" +
+          indent + "    allow_redirects=" +
           (settings.autoRedirect ? "True" : "False") +
+          ",\n";
+      if (settings.timeoutMilliseconds !== undefined)
+        code +=
+          indent +
+          "    timeout=" +
+          settings.timeoutMilliseconds / 1000 +
           ",\n";
       if (settings.ignoreCertificateValidation !== undefined)
         code +=
-          "    verify=" +
+          indent + "    verify=" +
           (settings.ignoreCertificateValidation ? "False" : "True") +
           ",\n";
-      code += ")\n";
+      code += indent + ")\n";
     }
-    return code + "print(response.text)\n";
+    return (
+      code +
+      (settings.readResponseContent === false ? "" : "print(response.text)\n")
+    );
   }
 
-  let code =
-    'package main\n\nimport (\n\t"fmt"\n\t"io"\n\t"log"\n\t"net/http"\n';
+  let code = 'package main\n\nimport (\n\t"log"\n\t"net/http"\n';
+  if (settings.readResponseContent !== false)
+    code += '\t"fmt"\n\t"io"\n';
   if (request.body !== undefined) code += '\t"strings"\n';
+  if (settings.timeoutMilliseconds !== undefined) code += '\t"time"\n';
   if (settings.ignoreCertificateValidation === true) code += '\t"crypto/tls"\n';
   if (
     settings.urlEncodeContent === true &&
@@ -278,6 +325,8 @@ export function renderOb2Dynamic(
   let client = "&http.Client{}";
   if (
     settings.autoRedirect === false ||
+    settings.maxNumberOfRedirects !== undefined ||
+    settings.timeoutMilliseconds !== undefined ||
     settings.ignoreCertificateValidation === true ||
     settings.httpVersion === "2.0"
   ) {
@@ -285,6 +334,16 @@ export function renderOb2Dynamic(
     if (settings.autoRedirect === false)
       code +=
         "\tclient.CheckRedirect = func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }\n";
+    else if (settings.maxNumberOfRedirects !== undefined)
+      code +=
+        "\tclient.CheckRedirect = func(_ *http.Request, via []*http.Request) error { if len(via) >= " +
+        settings.maxNumberOfRedirects +
+        " { return http.ErrUseLastResponse }; return nil }\n";
+    if (settings.timeoutMilliseconds !== undefined)
+      code +=
+        "\tclient.Timeout = " +
+        settings.timeoutMilliseconds +
+        " * time.Millisecond\n";
     if (settings.ignoreCertificateValidation === true)
       code +=
         "\tclient.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, ForceAttemptHTTP2: true}\n";
@@ -295,8 +354,11 @@ export function renderOb2Dynamic(
   code += "\tresp, err := " + client + ".Do(req)\n";
   code += "\tif err != nil { log.Fatal(err) }\n";
   code += "\tdefer resp.Body.Close()\n";
-  code += "\tresponseBody, err := io.ReadAll(resp.Body)\n";
-  code += "\tif err != nil { log.Fatal(err) }\n";
-  code += '\tfmt.Printf("%s\\n", responseBody)\n}\n';
+  if (settings.readResponseContent !== false) {
+    code += "\tresponseBody, err := io.ReadAll(resp.Body)\n";
+    code += "\tif err != nil { log.Fatal(err) }\n";
+    code += '\tfmt.Printf("%s\\n", responseBody)\n';
+  }
+  code += "}\n";
   return code;
 }
