@@ -1,10 +1,32 @@
 import { CCError } from "./utils.ts";
 import { toPython } from "./generators/python/python.ts";
 import { toPythonHttpx } from "./generators/python/httpx.ts";
+import { toPythonCurlCffi } from "./generators/python/curl_cffi.ts";
 import { toGo } from "./generators/go.ts";
 import { renderOb2Dynamic } from "./ob2-dynamic.ts";
 
-export type Ob2Output = "curl" | "python" | "python-httpx" | "go";
+export type Ob2Output = "curl" | "python" | "python-httpx" | "python-curl-cffi" | "go";
+
+export interface Ob2Settings {
+  autoRedirect?: boolean;
+  urlEncodeContent?: boolean;
+  curlUseBrowserHeaders?: boolean;
+  ignoreCertificateValidation?: boolean;
+  httpVersion?: string;
+  httpLibrary?: string;
+  curlImpersonateBrowserProfile?: string;
+}
+
+function boolean(value: string, field: string): boolean {
+  if (value === "True") return true;
+  if (value === "False") return false;
+  throw new CCError("OB2 " + field + " must be True or False");
+}
+
+function encodeContent(body: string): string {
+  return encodeURIComponent(body).replace(/%26/gi, "&").replace(/%3D/gi, "=");
+}
+
 
 type Pair = [string, string];
 
@@ -81,7 +103,7 @@ function pairs(value: string, field: string): Pair[] {
  * Parse one literal OB2 HttpRequest TYPE:STANDARD block into cURL argv.
  * Unknown fields are errors so a conversion cannot silently drop behavior.
  */
-export function ob2ToCurlArgs(block: string): string[] {
+function parseOb2(block: string): { args: string[]; settings: Ob2Settings } {
   const lines = block
     .replace(/\r\n/g, "\n")
     .split("\n")
@@ -97,6 +119,7 @@ export function ob2ToCurlArgs(block: string): string[] {
   let contentType: string | undefined;
   let headers: Pair[] = [];
   let cookies: Pair[] = [];
+  const settings: Ob2Settings = {};
   const seen = new Set<string>();
   let standard = false;
   for (let i = 1; i < lines.length - 1; i++) {
@@ -153,12 +176,24 @@ export function ob2ToCurlArgs(block: string): string[] {
       case "customCookies":
         cookies = pairs(value, field);
         break;
+      case "autoRedirect":
+      case "urlEncodeContent":
+      case "curlUseBrowserHeaders":
+      case "ignoreCertificateValidation":
+        settings[field] = boolean(value, field);
+        break;
+      case "httpVersion":
+        settings.httpVersion = quoted(value, field);
+        if (!["1.0", "1.1", "2.0", "3.0"].includes(settings.httpVersion)) {
+          throw new CCError("Unsupported OB2 httpVersion: " + settings.httpVersion);
+        }
+        break;
       case "httpLibrary":
       case "curlImpersonateBrowserProfile":
-        // Transport profiles are not HTTP request data.
         if (!/^[A-Za-z0-9]+$/.test(value)) {
           throw new CCError("Unsupported OB2 transport field: " + line);
         }
+        settings[field] = value;
         break;
       default:
         throw new CCError("Unsupported OB2 field: " + field);
@@ -177,12 +212,7 @@ export function ob2ToCurlArgs(block: string): string[] {
   if (contentType && !hasContentType) {
     headers.push(["Content-Type", contentType]);
   }
-  if (cookies.length) {
-    if (headers.some(([name]) => name.toLowerCase() === "cookie")) {
-      throw new CCError(
-        "OB2 block contains both a Cookie header and customCookies",
-      );
-    }
+  if (cookies.length && !headers.some(([name]) => name.toLowerCase() === "cookie")) {
     headers.push([
       "Cookie",
       cookies.map(([key, value]) => key + "=" + value).join("; "),
@@ -195,14 +225,30 @@ export function ob2ToCurlArgs(block: string): string[] {
     args.push("--header", name + ": " + value);
   }
   if (body || method !== "GET") {
-    args.push("--data-raw", body);
+    args.push("--data-raw", settings.urlEncodeContent && !/<[A-Za-z_][A-Za-z0-9_.]*>/.test(body) ? encodeContent(body) : body);
   }
-  return args;
+  return { args, settings };
+}
+
+export function ob2ToCurlArgs(block: string): string[] {
+  return parseOb2(block).args;
 }
 
 export function fromOb2(block: string, output: Ob2Output): string {
-  const args = ob2ToCurlArgs(block);
-  const dynamic = output === "curl" ? null : renderOb2Dynamic(args, output);
+  const { args, settings } = parseOb2(block);
+  const advanced =
+    settings.autoRedirect !== undefined ||
+    settings.urlEncodeContent === true ||
+    settings.ignoreCertificateValidation !== undefined ||
+    settings.httpVersion !== undefined ||
+    (output === "python-curl-cffi" && settings.httpLibrary === "CurlImpersonate");
+  if (output === "python" && settings.httpVersion === "2.0") {
+    throw new CCError("Python requests cannot force HTTP/2");
+  }
+  if (settings.httpVersion === "3.0" && output !== "python-curl-cffi" && output !== "curl") {
+    throw new CCError("This output does not support HTTP/3");
+  }
+  const dynamic = output === "curl" ? null : renderOb2Dynamic(args, output, settings, advanced);
   if (
     output === "curl" &&
     args.some((arg) => /<[A-Za-z_][A-Za-z0-9_.]*>/.test(arg))
@@ -214,7 +260,7 @@ export function fromOb2(block: string, output: Ob2Output): string {
   const profile = /^\s*(?:httpLibrary|curlImpersonateBrowserProfile)\s*=/m.test(
     block,
   );
-  const note = profile
+  const note = profile && output !== "python-curl-cffi"
     ? (output === "go" ? "//" : "#") +
       " OB2 transport profile omitted; verify network behavior.\n"
     : "";
@@ -224,6 +270,8 @@ export function fromOb2(block: string, output: Ob2Output): string {
       return note + toPython(args);
     case "python-httpx":
       return note + toPythonHttpx(args);
+    case "python-curl-cffi":
+      return note + toPythonCurlCffi(args);
     case "go":
       return note + toGo(args);
     case "curl":
