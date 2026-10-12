@@ -231,7 +231,17 @@ function parseOb2(block: string): { args: string[]; settings: Ob2Settings } {
 }
 
 export function ob2ToCurlArgs(block: string): string[] {
-  return parseOb2(block).args;
+  const { args, settings } = parseOb2(block);
+  if (settings.autoRedirect === true) args.push("--location");
+  if (settings.ignoreCertificateValidation === true) args.push("--insecure");
+  if (settings.httpVersion) {
+    args.push(
+      settings.httpVersion === "2.0" ? "--http2" :
+      settings.httpVersion === "3.0" ? "--http3" :
+      settings.httpVersion === "1.0" ? "--http1.0" : "--http1.1",
+    );
+  }
+  return args;
 }
 
 export function fromOb2(block: string, output: Ob2Output): string {
