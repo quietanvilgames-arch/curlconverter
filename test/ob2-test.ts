@@ -33,6 +33,20 @@ test("OB2 HttpRequest literal fields become cURL argv", (t) => {
   t.end();
 });
 
+test("OB2 accepts headers and cookies split across lines", (t) => {
+  const multiline = sample
+    .replace(
+      '  customHeaders = {("Accept", "application/json"), ("X-Label", "hello")}',
+      '  customHeaders = {\n    ("Accept", "application/json"),\n    ("X-Label", "hello")\n  }',
+    )
+    .replace(
+      '  customCookies = {("session", "a=b")}',
+      '  customCookies = {\n    ("session", "a=b")\n  }',
+    );
+  t.deepEqual(ob2ToCurlArgs(multiline), ob2ToCurlArgs(sample));
+  t.end();
+});
+
 test("OB2 block can target standard request backends", (t) => {
   const python = fromOb2(sample, "python");
   t.ok(python.includes("import requests"));

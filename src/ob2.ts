@@ -28,6 +28,29 @@ function quoted(value: string, field: string): string {
   }
 }
 
+function tupleListDepth(value: string): number {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (const char of value) {
+    if (escaped) {
+      escaped = false;
+    } else if (inString && char === "\\") {
+      escaped = true;
+    } else if (char === '"') {
+      inString = !inString;
+    } else if (!inString && char === "{") {
+      depth++;
+    } else if (!inString && char === "}") {
+      depth--;
+      if (depth < 0) {
+        throw new CCError("OB2 tuple list has an extra closing brace");
+      }
+    }
+  }
+  return depth;
+}
+
 function pairs(value: string, field: string): Pair[] {
   if (!value.startsWith("{") || !value.endsWith("}")) {
     throw new CCError("OB2 " + field + " must be a tuple list");
@@ -95,7 +118,16 @@ export function ob2ToCurlArgs(block: string): string[] {
     if (!match || seen.has(match[1])) {
       throw new CCError("Unsupported or duplicate OB2 field: " + line);
     }
-    const [, field, value] = match;
+    const [, field] = match;
+    let value = match[2];
+    if ((field === "customHeaders" || field === "customCookies") && value.startsWith("{")) {
+      while (tupleListDepth(value) > 0 && i + 1 < lines.length - 1) {
+        value += " " + lines[++i];
+      }
+      if (tupleListDepth(value) !== 0) {
+        throw new CCError("OB2 " + field + " has an unclosed tuple list");
+      }
+    }
     seen.add(field);
     switch (field) {
       case "url":
