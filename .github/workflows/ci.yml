@@ -18,6 +18,7 @@ jobs:
           CXXFLAGS: -std=c++20
         run: npm ci
       - run: npm run lint
+      - run: npx prettier src/generators/python/curl_cffi.ts | diff -u src/generators/python/curl_cffi.ts - || true
       - run: npx prettier --check .
 
   test:
