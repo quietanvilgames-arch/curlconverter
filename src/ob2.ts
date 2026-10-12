@@ -303,7 +303,9 @@ export function fromOb2(block: string, output: Ob2Output): string {
     ...parsedSettings,
   };
   if (output === "curl" && settings.readResponseContent === false) {
-    throw new CCError("cURL output cannot preserve readResponseContent = False");
+    throw new CCError(
+      "cURL output cannot preserve readResponseContent = False",
+    );
   }
   const advanced =
     settings.autoRedirect !== undefined ||
@@ -367,7 +369,10 @@ export function fromOb2(block: string, output: Ob2Output): string {
       if (settings.maxNumberOfRedirects !== undefined)
         curlArgs.push("--max-redirs", String(settings.maxNumberOfRedirects));
       if (settings.timeoutMilliseconds !== undefined)
-        curlArgs.push("--max-time", String(settings.timeoutMilliseconds / 1000));
+        curlArgs.push(
+          "--max-time",
+          String(settings.timeoutMilliseconds / 1000),
+        );
       if (settings.ignoreCertificateValidation === true)
         curlArgs.push("--insecure");
       if (settings.httpVersion) {

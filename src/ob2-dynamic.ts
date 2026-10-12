@@ -204,14 +204,10 @@ export function renderOb2Dynamic(
             ",\n";
         if (settings.timeoutMilliseconds !== undefined)
           code +=
-            "        timeout=" +
-            settings.timeoutMilliseconds / 1000 +
-            ",\n";
+            "        timeout=" + settings.timeoutMilliseconds / 1000 + ",\n";
         if (settings.maxNumberOfRedirects !== undefined)
           code +=
-            "        max_redirects=" +
-            settings.maxNumberOfRedirects +
-            ",\n";
+            "        max_redirects=" + settings.maxNumberOfRedirects + ",\n";
         if (settings.httpVersion)
           code +=
             "        http_version=" +
@@ -244,9 +240,7 @@ export function renderOb2Dynamic(
       if (session) {
         code += "with requests.Session() as client:\n";
         code +=
-          "    client.max_redirects = " +
-          settings.maxNumberOfRedirects +
-          "\n";
+          "    client.max_redirects = " + settings.maxNumberOfRedirects + "\n";
       }
       const indent = session ? "    " : "";
       code +=
@@ -261,18 +255,17 @@ export function renderOb2Dynamic(
         code += indent + "    data=" + body + ",\n";
       if (settings.autoRedirect !== undefined)
         code +=
-          indent + "    allow_redirects=" +
+          indent +
+          "    allow_redirects=" +
           (settings.autoRedirect ? "True" : "False") +
           ",\n";
       if (settings.timeoutMilliseconds !== undefined)
         code +=
-          indent +
-          "    timeout=" +
-          settings.timeoutMilliseconds / 1000 +
-          ",\n";
+          indent + "    timeout=" + settings.timeoutMilliseconds / 1000 + ",\n";
       if (settings.ignoreCertificateValidation !== undefined)
         code +=
-          indent + "    verify=" +
+          indent +
+          "    verify=" +
           (settings.ignoreCertificateValidation ? "False" : "True") +
           ",\n";
       code += indent + ")\n";
@@ -284,8 +277,7 @@ export function renderOb2Dynamic(
   }
 
   let code = 'package main\n\nimport (\n\t"log"\n\t"net/http"\n';
-  if (settings.readResponseContent !== false)
-    code += '\t"fmt"\n\t"io"\n';
+  if (settings.readResponseContent !== false) code += '\t"fmt"\n\t"io"\n';
   if (request.body !== undefined) code += '\t"strings"\n';
   if (settings.timeoutMilliseconds !== undefined) code += '\t"time"\n';
   if (settings.ignoreCertificateValidation === true) code += '\t"crypto/tls"\n';

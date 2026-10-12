@@ -194,17 +194,16 @@ test("OB2 empty URL creates a blank URL input", (t) => {
 });
 
 test("OB2 timeout, redirect count, response body and empty request body", (t) => {
-  const block = sample
-    .replace(
+  const block = sample.replace(
+    "  method = POST",
+    [
       "  method = POST",
-      [
-        "  method = POST",
-        "  autoRedirect = True",
-        "  maxNumberOfRedirects = 4",
-        "  timeoutMilliseconds = 12500",
-        "  readResponseContent = False",
-      ].join("\n"),
-    );
+      "  autoRedirect = True",
+      "  maxNumberOfRedirects = 4",
+      "  timeoutMilliseconds = 12500",
+      "  readResponseContent = False",
+    ].join("\n"),
+  );
   const args = ob2ToCurlArgs(block);
   t.ok(args.includes("--location"));
   t.ok(args.includes("--max-redirs"));
