@@ -205,7 +205,9 @@ export function renderOb2Dynamic(
           const profile = settings.curlImpersonateBrowserProfile;
           const target = profile && browserProfiles[profile];
           if (!target)
-            throw new CCError("Unsupported curl_cffi browser profile: " + profile);
+            throw new CCError(
+              "Unsupported curl_cffi browser profile: " + profile,
+            );
           code += "        impersonate=" + reprStr(target) + ",\n";
           if (settings.curlUseBrowserHeaders !== undefined)
             code +=

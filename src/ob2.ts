@@ -30,8 +30,9 @@ function boolean(value: string, field: string): boolean {
 
 function encodeContent(body: string): string {
   return encodeURIComponent(body)
-    .replace(/[!'()*]/g, (char) =>
-      "%" + char.charCodeAt(0).toString(16).toUpperCase(),
+    .replace(
+      /[!'()*]/g,
+      (char) => "%" + char.charCodeAt(0).toString(16).toUpperCase(),
     )
     .replace(/%26/gi, "&")
     .replace(/%3D/gi, "=");
@@ -253,8 +254,7 @@ function parseOb2(block: string): { args: string[]; settings: Ob2Settings } {
 export function ob2ToCurlArgs(block: string): string[] {
   const { args, settings } = parseOb2(block);
   if (settings.autoRedirect === true) args.push("--location");
-  if (settings.ignoreCertificateValidation === true)
-    args.push("--insecure");
+  if (settings.ignoreCertificateValidation === true) args.push("--insecure");
   if (settings.httpVersion) {
     args.push(
       settings.httpVersion === "2.0"
