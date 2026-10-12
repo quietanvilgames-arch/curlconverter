@@ -511,7 +511,10 @@ if (inputMode === "ob2") {
       ([arg]) => !["stdin", "input", "language", "verbose"].includes(arg),
     )
   ) {
-    exitWithError(new CCError("OB2 input does not accept curl options"), verbose);
+    exitWithError(
+      new CCError("OB2 input does not accept curl options"),
+      verbose,
+    );
   }
   if (!["curl", "python", "python-httpx", "go"].includes(language)) {
     exitWithError(
