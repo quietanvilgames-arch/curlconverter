@@ -102,7 +102,7 @@ Choose the output language by passing `--language <language>`. The options are
 - `perl`
 - `php`, `php-guzzle`, `php-requests`
 - `powershell`, `powershell-webrequest`
-- `python` (the default), `python-http`
+- `python` (the default), `python-curl-cffi`, `python-http`, `python-httpx`
 - `r`, `r-httr2`
 - `ruby`, `ruby-httparty`
 - `rust`
@@ -110,6 +110,64 @@ Choose the output language by passing `--language <language>`. The options are
 - `wget`
 
 `--verbose` enables printing of conversion warnings and error tracebacks.
+
+`python-httpx` produces a single synchronous HTTPX request. For example,
+`curlconverter --language python-httpx https://example.com` emits Python code.
+Install the Python package with `pip install httpx` before running that code. Multipart
+uploads and file-backed bodies or queries currently raise an error. Review
+conversion warnings for cURL options that have no HTTPX equivalent.
+
+`python-curl-cffi` uses a synchronous `curl_cffi.requests.Session`. Install the
+Python package with `pip install curl_cffi` before running its output. It
+supports the same single-request subset as `python-httpx`; file-backed bodies,
+files, and multipart uploads currently raise an error.
+
+### Convert one OB2 HTTP request block
+
+Run the converter, paste a single `BLOCK:HttpRequest` /
+`TYPE:STANDARD` / `ENDBLOCK` block into the terminal, and press Enter
+after `ENDBLOCK`. Conversion starts immediately:
+
+```sh
+curlconverter --input ob2 --language python-httpx
+```
+
+Use `python`, `python-curl-cffi`, `go`, or `curl` as the output language instead. You can also
+pipe a multiline block to the same command. In PowerShell, for example:
+
+```powershell
+@'
+BLOCK:HttpRequest
+  url = "https://example.com"
+  method = GET
+  TYPE:STANDARD
+  $""
+  ""
+ENDBLOCK
+'@ | node .\dist\src\cli.js --input ob2 --language python-httpx
+```
+
+The JavaScript API is `fromOb2(block, "python-httpx")`, or
+`ob2ToCurlArgs(block)` to inspect the parsed cURL arguments. This accepts
+literal URL, method, header and cookie fields (including multiline tuple lists)
+with a standard body and content type, like the output of `curl_to_lolicode.py`.
+It rejects unknown fields, other body types and multiple blocks. Interpolated
+header lists (`customHeaders = ${...}`) and placeholders such as
+`<input.USER>` generate blank target-language variables for Python and Go.
+Dynamic cURL output is not yet supported. Explicit `autoRedirect`, `maxNumberOfRedirects`, `timeoutMilliseconds`,
+`alwaysSendContent`, `readResponseContent`, `ignoreCertificateValidation`,
+`urlEncodeContent`, and `httpVersion` options are applied to supported outputs.
+OB2 defaults for redirects (enabled, up to eight), timeout (15 seconds), and
+certificate checks (disabled) also apply when omitted. Review generated TLS
+settings before using them outside OB2.
+An explicitly disabled response read cannot currently be represented in cURL
+output and produces an error. If `customCookies` and an explicit `Cookie`
+header appear together, the explicit header takes precedence for this request.
+`python-curl-cffi` maps supported OB2 browser profiles (including
+`Safari260Ios` to `safari260_ios`) and respects `curlUseBrowserHeaders = False`.
+Other transports mark profiles as omitted; unsupported curl_cffi profiles fail
+with an explicit error. Python requests cannot force
+HTTP/2; for HTTPX HTTP/2 output install `httpx[http2]`.
 
 ### Usage as a library
 
@@ -149,3 +207,4 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md)
 ## License
 
 MIT © [Nick Carneiro](http://trillworks.com)
+

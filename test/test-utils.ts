@@ -220,6 +220,16 @@ const converters = {
     extension: ".py",
     converter: curlconverter.toPython,
   },
+  "python-httpx": {
+    name: "Python + HTTPX",
+    extension: ".py",
+    converter: curlconverter.toPythonHttpx,
+  },
+  "python-curl-cffi": {
+    name: "Python + curl_cffi",
+    extension: ".py",
+    converter: curlconverter.toPythonCurlCffi,
+  },
   r: {
     name: "R",
     extension: ".r",
@@ -265,9 +275,11 @@ type Converter = keyof typeof converters;
 
 // Check that we have at least one test for every generator
 // https://github.com/curlconverter/curlconverter/pull/299
-const testedConverters = Object.entries(converters).map(
-  (c) => c[1].converter.name,
-);
+const testedConverters = [
+  ...Object.entries(converters).map((c) => c[1].converter.name),
+  "fromOb2",
+  "ob2ToCurlArgs",
+];
 const untestedConverters = ["toPhpRequests"];
 const notConverterExports = ["Word"];
 

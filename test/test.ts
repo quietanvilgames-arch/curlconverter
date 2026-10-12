@@ -1,3 +1,4 @@
+import "./ob2-test.ts";
 import fs from "fs";
 import path from "path";
 

@@ -215,6 +215,16 @@ import {
   supportedArgs as supportedArgsPythonHttp,
 } from "./generators/python/http.ts";
 import {
+  _toPythonHttpx,
+  toPythonHttpxWarn,
+  supportedArgs as supportedArgsPythonHttpx,
+} from "./generators/python/httpx.ts";
+import {
+  _toPythonCurlCffi,
+  toPythonCurlCffiWarn,
+  supportedArgs as supportedArgsPythonCurlCffi,
+} from "./generators/python/curl_cffi.ts";
+import {
   _toR,
   toRWarn,
   supportedArgs as supportedArgsR,
@@ -251,6 +261,8 @@ import {
 } from "./generators/wget.ts";
 
 import fs from "fs";
+import * as readline from "node:readline";
+import { fromOb2, type Ob2Output } from "./ob2.ts";
 
 // This line is updated by extract_curl_args.py
 const VERSION = "4.12.0 (curl 8.2.1)";
@@ -334,6 +346,12 @@ const translate: {
   "powershell-webrequest": [_toPowershellWebRequest, toPowershellWebRequestWarn, supportedArgsPowershellWebRequest],
   python: [_toPython, toPythonWarn, supportedArgsPython],
   "python-http": [_toPythonHttp, toPythonHttpWarn, supportedArgsPythonHttp],
+  "python-httpx": [_toPythonHttpx, toPythonHttpxWarn, supportedArgsPythonHttpx],
+  "python-curl-cffi": [
+    _toPythonCurlCffi,
+    toPythonCurlCffiWarn,
+    supportedArgsPythonCurlCffi,
+  ],
   "python-httpclient": [_toPythonHttp, toPythonHttpWarn, supportedArgsPythonHttp], // undocumented alias
   r: [_toR, toRWarn, supportedArgsR],
   "r-httr": [_toR, toRWarn, supportedArgsR], // undocumented alias
@@ -346,6 +364,7 @@ const translate: {
 };
 
 const USAGE = `Usage: curlconverter [--language <language>] [-] [curl_options...]
+       curlconverter --input ob2 --language <curl|python|python-httpx|python-curl-cffi|go> [-]
 
 language: the language to convert the curl command to. The choices are
   ansible
@@ -388,6 +407,8 @@ language: the language to convert the curl command to. The choices are
   powershell-webrequest
   python (the default)
   python-http
+  python-httpx
+  python-curl-cffi
   r
   r-httr2
   ruby
@@ -398,6 +419,8 @@ language: the language to convert the curl command to. The choices are
 
 -: read curl command from stdin
 
+--input ob2: paste one HttpRequest block and finish with ENDBLOCK; accepts stdin
+
 --verbose/-v: print warnings and error tracebacks
 
 curl_options: these should be passed exactly as they would be passed to curl.
@@ -406,6 +429,7 @@ curl_options: these should be passed exactly as they would be passed to curl.
 const curlconverterLongOpts: LongOpts = {
   ...curlLongOpts,
   language: { type: "string", name: "language" },
+  input: { type: "string", name: "input" },
   stdin: { type: "bool", name: "stdin" },
 };
 const curlconverterShortOpts: ShortOpts = {
@@ -471,6 +495,57 @@ if (global_.version) {
 const verbose = !!global_.verbose;
 const commandFromStdin = global_.stdin;
 const language = global_.language || defaultLanguage;
+const inputMode = global_.input || "curl";
+
+async function readOb2Input(): Promise<string> {
+  if (!process.stdin.isTTY) return fs.readFileSync(0, "utf8");
+  console.error(
+    "Paste one OB2 HttpRequest block; conversion starts after ENDBLOCK:",
+  );
+  const lines: string[] = [];
+  const input = readline.createInterface({ input: process.stdin });
+  for await (const line of input) {
+    lines.push(line);
+    if (line.trim() === "ENDBLOCK") {
+      input.close();
+      break;
+    }
+  }
+  return lines.join("\n");
+}
+if (inputMode !== "curl" && inputMode !== "ob2") {
+  exitWithError(new CCError("unexpected --input: " + inputMode), verbose);
+}
+if (inputMode === "ob2") {
+  if (
+    seenArgs.some(
+      ([arg]) => !["stdin", "input", "language", "verbose"].includes(arg),
+    )
+  ) {
+    exitWithError(
+      new CCError("OB2 input does not accept curl options"),
+      verbose,
+    );
+  }
+  if (
+    !["curl", "python", "python-httpx", "python-curl-cffi", "go"].includes(
+      language,
+    )
+  ) {
+    exitWithError(
+      new CCError(
+        "OB2 output must be curl, python, python-httpx, python-curl-cffi, or go",
+      ),
+      verbose,
+    );
+  }
+  try {
+    process.stdout.write(fromOb2(await readOb2Input(), language as Ob2Output));
+  } catch (e) {
+    exitWithError(e, verbose);
+  }
+  process.exit(0);
+}
 if (!has(translate, language)) {
   exitWithError(
     new CCError(
@@ -492,7 +567,7 @@ if (!seenArgs.length) {
 const [generator, warnGenerator, supportedArgs] = translate[language];
 const extraArgs = seenArgs.filter((a) => {
   const [arg, actual] = a;
-  const ignore = ["stdin", "verbose", "language"].includes(arg);
+  const ignore = ["stdin", "verbose", "language", "input"].includes(arg);
   if (!ignore && !supportedArgs.has(arg)) {
     warnings.push([
       arg,
