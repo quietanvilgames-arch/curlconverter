@@ -119,14 +119,27 @@ conversion warnings for cURL options that have no HTTPX equivalent.
 
 ### Convert one OB2 HTTP request block
 
-Save a single `BLOCK:HttpRequest` / `TYPE:STANDARD` / `ENDBLOCK` block
-to `request.ob2`, then choose an output:
+Run the converter, paste a single `BLOCK:HttpRequest` /
+`TYPE:STANDARD` / `ENDBLOCK` block into the terminal, and press Enter
+after `ENDBLOCK`. Conversion starts immediately:
 
 ```sh
-curlconverter --input ob2 --language python - < request.ob2
-curlconverter --input ob2 --language python-httpx - < request.ob2
-curlconverter --input ob2 --language go - < request.ob2
-curlconverter --input ob2 --language curl - < request.ob2
+curlconverter --input ob2 --language python-httpx
+```
+
+Use `python`, `go`, or `curl` as the output language instead. You can also
+pipe a multiline block to the same command. In PowerShell, for example:
+
+```powershell
+@'
+BLOCK:HttpRequest
+  url = "https://example.com"
+  method = GET
+  TYPE:STANDARD
+  $""
+  ""
+ENDBLOCK
+'@ | node .\dist\src\cli.js --input ob2 --language python-httpx
 ```
 
 The JavaScript API is `fromOb2(block, "python-httpx")`, or

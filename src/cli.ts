@@ -256,6 +256,7 @@ import {
 } from "./generators/wget.ts";
 
 import fs from "fs";
+import * as readline from "node:readline";
 import { fromOb2, type Ob2Output } from "./ob2.ts";
 
 // This line is updated by extract_curl_args.py
@@ -353,7 +354,7 @@ const translate: {
 };
 
 const USAGE = `Usage: curlconverter [--language <language>] [-] [curl_options...]
-       curlconverter --input ob2 --language <curl|python|python-httpx|go> -
+       curlconverter --input ob2 --language <curl|python|python-httpx|go> [-]
 
 language: the language to convert the curl command to. The choices are
   ansible
@@ -407,7 +408,7 @@ language: the language to convert the curl command to. The choices are
 
 -: read curl command from stdin
 
---input ob2: read one literal OB2 HttpRequest block from stdin
+--input ob2: paste one HttpRequest block and finish with ENDBLOCK; accepts stdin
 
 --verbose/-v: print warnings and error tracebacks
 
@@ -484,18 +485,32 @@ const verbose = !!global_.verbose;
 const commandFromStdin = global_.stdin;
 const language = global_.language || defaultLanguage;
 const inputMode = global_.input || "curl";
+
+async function readOb2Input(): Promise<string> {
+  if (!process.stdin.isTTY) return fs.readFileSync(0, "utf8");
+  console.error("Paste one OB2 HttpRequest block; conversion starts after ENDBLOCK:");
+  const lines: string[] = [];
+  const input = readline.createInterface({ input: process.stdin });
+  for await (const line of input) {
+    lines.push(line);
+    if (line.trim() === "ENDBLOCK") {
+      input.close();
+      break;
+    }
+  }
+  return lines.join("\n");
+}
 if (inputMode !== "curl" && inputMode !== "ob2") {
   exitWithError(new CCError("unexpected --input: " + inputMode), verbose);
 }
 if (inputMode === "ob2") {
   if (
-    !commandFromStdin ||
     seenArgs.some(
       ([arg]) => !["stdin", "input", "language", "verbose"].includes(arg),
     )
   ) {
     exitWithError(
-      new CCError("OB2 input requires stdin (-) and no curl options"),
+      new CCError("OB2 input does not accept curl options"),
       verbose,
     );
   }
@@ -507,7 +522,7 @@ if (inputMode === "ob2") {
   }
   try {
     process.stdout.write(
-      fromOb2(fs.readFileSync(0, "utf8"), language as Ob2Output),
+      fromOb2(await readOb2Input(), language as Ob2Output),
     );
   } catch (e) {
     exitWithError(e, verbose);
