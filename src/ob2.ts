@@ -203,8 +203,13 @@ export function ob2ToCurlArgs(block: string): string[] {
 export function fromOb2(block: string, output: Ob2Output): string {
   const args = ob2ToCurlArgs(block);
   const dynamic = output === "curl" ? null : renderOb2Dynamic(args, output);
-  if (output === "curl" && args.some((arg) => /<[A-Za-z_][A-Za-z0-9_.]*>/.test(arg))) {
-    throw new CCError("Dynamic OB2 variables cannot be represented in cURL output yet");
+  if (
+    output === "curl" &&
+    args.some((arg) => /<[A-Za-z_][A-Za-z0-9_.]*>/.test(arg))
+  ) {
+    throw new CCError(
+      "Dynamic OB2 variables cannot be represented in cURL output yet",
+    );
   }
   const profile = /^\s*(?:httpLibrary|curlImpersonateBrowserProfile)\s*=/m.test(
     block,

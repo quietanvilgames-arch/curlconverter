@@ -22,12 +22,15 @@ function variables(values: string[]): TemplateVariable[] {
         .map((part) => part.toLowerCase());
       const base = parts.join("_");
       let python = base;
-      for (let suffix = 2; names.has(python); suffix++) python = base + "_" + suffix;
+      for (let suffix = 2; names.has(python); suffix++)
+        python = base + "_" + suffix;
       names.add(python);
       result.push({
         source,
         python,
-        go: python.replace(/_([a-z0-9])/g, (_, part: string) => part.toUpperCase()),
+        go: python.replace(/_([a-z0-9])/g, (_, part: string) =>
+          part.toUpperCase(),
+        ),
       });
     }
   }
@@ -42,13 +45,15 @@ function template(
   const pieces: string[] = [];
   let offset = 0;
   for (const match of value.matchAll(marker)) {
-    if (match.index > offset) pieces.push(literal(value.slice(offset, match.index)));
+    if (match.index > offset)
+      pieces.push(literal(value.slice(offset, match.index)));
     const name = names.get(match[1]);
     if (!name) throw new CCError("Missing OB2 variable: " + match[1]);
     pieces.push(name);
     offset = match.index + match[0].length;
   }
-  if (offset < value.length || !pieces.length) pieces.push(literal(value.slice(offset)));
+  if (offset < value.length || !pieces.length)
+    pieces.push(literal(value.slice(offset)));
   return pieces.join(" + ");
 }
 
@@ -69,7 +74,10 @@ function fields(args: string[]) {
   return { method: args[2], url: args[3], headers, body };
 }
 
-export function renderOb2Dynamic(args: string[], output: Output): string | null {
+export function renderOb2Dynamic(
+  args: string[],
+  output: Output,
+): string | null {
   const request = fields(args);
   const vars = variables([
     request.url,
@@ -97,25 +105,29 @@ export function renderOb2Dynamic(args: string[], output: Output): string | null 
       code += httpx ? "]\n\n" : "}\n\n";
     }
     if (httpx) {
-      code += "with httpx.Client(timeout=None, follow_redirects=False) as client:\n";
+      code +=
+        "with httpx.Client(timeout=None, follow_redirects=False) as client:\n";
       code += "    response = client.request(\n";
       code += "        " + reprStr(request.method) + ",\n";
       code += "        " + py(request.url) + ",\n";
       if (request.headers.length) code += "        headers=headers,\n";
-      if (request.body !== undefined) code += "        content=" + py(request.body) + ",\n";
+      if (request.body !== undefined)
+        code += "        content=" + py(request.body) + ",\n";
       code += "    )\n";
     } else {
       code += "response = requests.request(\n";
       code += "    " + reprStr(request.method) + ",\n";
       code += "    " + py(request.url) + ",\n";
       if (request.headers.length) code += "    headers=headers,\n";
-      if (request.body !== undefined) code += "    data=" + py(request.body) + ",\n";
+      if (request.body !== undefined)
+        code += "    data=" + py(request.body) + ",\n";
       code += ")\n";
     }
     return code + "print(response.text)\n";
   }
 
-  let code = 'package main\n\nimport (\n\t"fmt"\n\t"io"\n\t"log"\n\t"net/http"\n';
+  let code =
+    'package main\n\nimport (\n\t"fmt"\n\t"io"\n\t"log"\n\t"net/http"\n';
   if (request.body !== undefined) code += '\t"strings"\n';
   code += ")\n\nfunc main() {\n";
   for (const v of vars) code += "\t" + v.go + ' := ""\n';
@@ -123,8 +135,13 @@ export function renderOb2Dynamic(args: string[], output: Output): string | null 
   if (request.body !== undefined) {
     code += "\tbody := strings.NewReader(" + go(request.body) + ")\n";
   }
-  code += "\treq, err := http.NewRequest(" + JSON.stringify(request.method) + ", ";
-  code += go(request.url) + ", " + (request.body === undefined ? "nil" : "body") + ")\n";
+  code +=
+    "\treq, err := http.NewRequest(" + JSON.stringify(request.method) + ", ";
+  code +=
+    go(request.url) +
+    ", " +
+    (request.body === undefined ? "nil" : "body") +
+    ")\n";
   code += "\tif err != nil { log.Fatal(err) }\n";
   for (const [name, value] of request.headers) {
     code += "\treq.Header.Add(" + go(name) + ", " + go(value) + ")\n";
