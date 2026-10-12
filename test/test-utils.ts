@@ -225,6 +225,11 @@ const converters = {
     extension: ".py",
     converter: curlconverter.toPythonHttpx,
   },
+  "python-curl-cffi": {
+    name: "Python + curl_cffi",
+    extension: ".py",
+    converter: curlconverter.toPythonCurlCffi,
+  },
   r: {
     name: "R",
     extension: ".r",

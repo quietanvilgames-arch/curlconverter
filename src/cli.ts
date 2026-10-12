@@ -220,6 +220,11 @@ import {
   supportedArgs as supportedArgsPythonHttpx,
 } from "./generators/python/httpx.ts";
 import {
+  _toPythonCurlCffi,
+  toPythonCurlCffiWarn,
+  supportedArgs as supportedArgsPythonCurlCffi,
+} from "./generators/python/curl_cffi.ts";
+import {
   _toR,
   toRWarn,
   supportedArgs as supportedArgsR,
@@ -342,6 +347,7 @@ const translate: {
   python: [_toPython, toPythonWarn, supportedArgsPython],
   "python-http": [_toPythonHttp, toPythonHttpWarn, supportedArgsPythonHttp],
   "python-httpx": [_toPythonHttpx, toPythonHttpxWarn, supportedArgsPythonHttpx],
+  "python-curl-cffi": [_toPythonCurlCffi, toPythonCurlCffiWarn, supportedArgsPythonCurlCffi],
   "python-httpclient": [_toPythonHttp, toPythonHttpWarn, supportedArgsPythonHttp], // undocumented alias
   r: [_toR, toRWarn, supportedArgsR],
   "r-httr": [_toR, toRWarn, supportedArgsR], // undocumented alias
@@ -398,6 +404,7 @@ language: the language to convert the curl command to. The choices are
   python (the default)
   python-http
   python-httpx
+  python-curl-cffi
   r
   r-httr2
   ruby

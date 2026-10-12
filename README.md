@@ -102,7 +102,7 @@ Choose the output language by passing `--language <language>`. The options are
 - `perl`
 - `php`, `php-guzzle`, `php-requests`
 - `powershell`, `powershell-webrequest`
-- `python` (the default), `python-http`, `python-httpx`
+- `python` (the default), `python-curl-cffi`, `python-http`, `python-httpx`
 - `r`, `r-httr2`
 - `ruby`, `ruby-httparty`
 - `rust`
@@ -116,6 +116,11 @@ Choose the output language by passing `--language <language>`. The options are
 Install the Python package with `pip install httpx` before running that code. Multipart
 uploads and file-backed bodies or queries currently raise an error. Review
 conversion warnings for cURL options that have no HTTPX equivalent.
+
+`python-curl-cffi` uses a synchronous `curl_cffi.requests.Session`. Install the
+Python package with `pip install curl_cffi` before running its output. It
+supports the same single-request subset as `python-httpx`; file-backed bodies,
+files, and multipart uploads currently raise an error.
 
 ### Convert one OB2 HTTP request block
 
