@@ -164,6 +164,11 @@ test("OB2 URL encoding handles literal bodies and checks booleans", (t) => {
     .replace("  method = POST", "  method = POST\n  urlEncodeContent = True")
     .replace(/^  \$".*"$/m, '  $"name=hello world&code=1"');
   t.ok(ob2ToCurlArgs(block).includes("name=hello%20world&code=1"));
+  t.ok(
+    ob2ToCurlArgs(block.replace("hello world", "it\'s fine")).includes(
+      "name=it%27s%20fine&code=1",
+    ),
+  );
   t.throws(
     () =>
       ob2ToCurlArgs(
