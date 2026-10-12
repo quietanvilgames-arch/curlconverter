@@ -100,24 +100,39 @@ export function renderOb2Dynamic(
     let code = cffi
       ? "from curl_cffi import requests\n"
       : "import " + (httpx ? "httpx" : "requests") + "\n";
-    const encodeBody = settings.urlEncodeContent === true && request.body !== undefined && /<[A-Za-z_][A-Za-z0-9_.]*>/.test(request.body);
+    const encodeBody =
+      settings.urlEncodeContent === true &&
+      request.body !== undefined &&
+      /<[A-Za-z_][A-Za-z0-9_.]*>/.test(request.body);
     if (encodeBody) code += "from urllib.parse import quote\n";
     code += "\n";
     code += vars.map((v) => v.python + ' = ""\n').join("") + "\n";
     if (request.headers.length) {
       code += httpx || cffi ? "headers = [\n" : "headers = {\n";
       for (const [name, value] of request.headers) {
-        code += httpx || cffi
-          ? "    (" + py(name) + ", " + py(value) + "),\n"
-          : "    " + py(name) + ": " + py(value) + ",\n";
+        code +=
+          httpx || cffi
+            ? "    (" + py(name) + ", " + py(value) + "),\n"
+            : "    " + py(name) + ": " + py(value) + ",\n";
       }
       code += httpx || cffi ? "]\n\n" : "}\n\n";
     }
     const rawBody = request.body === undefined ? "" : py(request.body);
-    const body = encodeBody ? 'quote(' + rawBody + ', safe="").replace("%26", "&").replace("%3D", "=")' : rawBody;
+    const body = encodeBody
+      ? "quote(" +
+        rawBody +
+        ', safe="").replace("%26", "&").replace("%3D", "=")'
+      : rawBody;
     if (httpx || cffi) {
       if (httpx) {
-        code += "with httpx.Client(timeout=None, follow_redirects=" + (settings.autoRedirect === true ? "True" : "False") + (settings.httpVersion === "2.0" ? ", http2=True" : "") + (settings.ignoreCertificateValidation === true ? ", verify=False" : "") + ") as client:\n";
+        code +=
+          "with httpx.Client(timeout=None, follow_redirects=" +
+          (settings.autoRedirect === true ? "True" : "False") +
+          (settings.httpVersion === "2.0" ? ", http2=True" : "") +
+          (settings.ignoreCertificateValidation === true
+            ? ", verify=False"
+            : "") +
+          ") as client:\n";
       } else {
         code += "with requests.Session() as client:\n";
       }
@@ -125,20 +140,40 @@ export function renderOb2Dynamic(
       code += "        " + reprStr(request.method) + ",\n";
       code += "        " + py(request.url) + ",\n";
       if (request.headers.length) code += "        headers=headers,\n";
-      if (request.body !== undefined)
-        code += "        content=" + body + ",\n";
+      if (request.body !== undefined) code += "        content=" + body + ",\n";
       if (cffi) {
-        code += "        allow_redirects=" + (settings.autoRedirect === true ? "True" : "False") + ",\n";
+        code +=
+          "        allow_redirects=" +
+          (settings.autoRedirect === true ? "True" : "False") +
+          ",\n";
         if (settings.ignoreCertificateValidation !== undefined)
-          code += "        verify=" + (settings.ignoreCertificateValidation ? "False" : "True") + ",\n";
+          code +=
+            "        verify=" +
+            (settings.ignoreCertificateValidation ? "False" : "True") +
+            ",\n";
         if (settings.httpVersion)
-          code += "        http_version=" + reprStr(settings.httpVersion === "3.0" ? "v3" : settings.httpVersion === "2.0" ? "v2" : "v1") + ",\n";
+          code +=
+            "        http_version=" +
+            reprStr(
+              settings.httpVersion === "3.0"
+                ? "v3"
+                : settings.httpVersion === "2.0"
+                  ? "v2"
+                  : "v1",
+            ) +
+            ",\n";
         if (settings.httpLibrary === "CurlImpersonate") {
           if (settings.curlImpersonateBrowserProfile !== "Safari260Ios")
-            throw new CCError("Unsupported curl_cffi browser profile: " + settings.curlImpersonateBrowserProfile);
+            throw new CCError(
+              "Unsupported curl_cffi browser profile: " +
+                settings.curlImpersonateBrowserProfile,
+            );
           code += "        impersonate='safari260_ios',\n";
           if (settings.curlUseBrowserHeaders !== undefined)
-            code += "        default_headers=" + (settings.curlUseBrowserHeaders ? "True" : "False") + ",\n";
+            code +=
+              "        default_headers=" +
+              (settings.curlUseBrowserHeaders ? "True" : "False") +
+              ",\n";
         }
       }
       code += "    )\n";
@@ -147,12 +182,17 @@ export function renderOb2Dynamic(
       code += "    " + reprStr(request.method) + ",\n";
       code += "    " + py(request.url) + ",\n";
       if (request.headers.length) code += "    headers=headers,\n";
-      if (request.body !== undefined)
-        code += "    data=" + body + ",\n";
+      if (request.body !== undefined) code += "    data=" + body + ",\n";
       if (settings.autoRedirect !== undefined)
-        code += "    allow_redirects=" + (settings.autoRedirect ? "True" : "False") + ",\n";
+        code +=
+          "    allow_redirects=" +
+          (settings.autoRedirect ? "True" : "False") +
+          ",\n";
       if (settings.ignoreCertificateValidation !== undefined)
-        code += "    verify=" + (settings.ignoreCertificateValidation ? "False" : "True") + ",\n";
+        code +=
+          "    verify=" +
+          (settings.ignoreCertificateValidation ? "False" : "True") +
+          ",\n";
       code += ")\n";
     }
     return code + "print(response.text)\n";
@@ -161,21 +201,26 @@ export function renderOb2Dynamic(
   let code =
     'package main\n\nimport (\n\t"fmt"\n\t"io"\n\t"log"\n\t"net/http"\n';
   if (request.body !== undefined) code += '\t"strings"\n';
-  if (settings.ignoreCertificateValidation === true)
-    code += '\t"crypto/tls"\n';
-  if (settings.urlEncodeContent === true &&
-      request.body !== undefined &&
-      /<[A-Za-z_][A-Za-z0-9_.]*>/.test(request.body))
+  if (settings.ignoreCertificateValidation === true) code += '\t"crypto/tls"\n';
+  if (
+    settings.urlEncodeContent === true &&
+    request.body !== undefined &&
+    /<[A-Za-z_][A-Za-z0-9_.]*>/.test(request.body)
+  )
     code += '\t"net/url"\n';
   code += ")\n\nfunc main() {\n";
   for (const v of vars) code += "\t" + v.go + ' := ""\n';
   code += "\n";
   if (request.body !== undefined) {
     let value = go(request.body);
-    if (settings.urlEncodeContent === true &&
-        /<[A-Za-z_][A-Za-z0-9_.]*>/.test(request.body)) {
-      value = 'strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(url.QueryEscape(' +
-        value + '), "+", "%20"), "%26", "&"), "%3D", "=")';
+    if (
+      settings.urlEncodeContent === true &&
+      /<[A-Za-z_][A-Za-z0-9_.]*>/.test(request.body)
+    ) {
+      value =
+        "strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(url.QueryEscape(" +
+        value +
+        '), "+", "%20"), "%26", "&"), "%3D", "=")';
     }
     code += "\tbody := strings.NewReader(" + value + ")\n";
   }
@@ -191,13 +236,18 @@ export function renderOb2Dynamic(
     code += "\treq.Header.Add(" + go(name) + ", " + go(value) + ")\n";
   }
   let client = "&http.Client{}";
-  if (settings.autoRedirect === false || settings.ignoreCertificateValidation === true ||
-      settings.httpVersion === "2.0") {
+  if (
+    settings.autoRedirect === false ||
+    settings.ignoreCertificateValidation === true ||
+    settings.httpVersion === "2.0"
+  ) {
     code += "\tclient := &http.Client{}\n";
     if (settings.autoRedirect === false)
-      code += "\tclient.CheckRedirect = func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }\n";
+      code +=
+        "\tclient.CheckRedirect = func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }\n";
     if (settings.ignoreCertificateValidation === true)
-      code += "\tclient.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, ForceAttemptHTTP2: true}\n";
+      code +=
+        "\tclient.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, ForceAttemptHTTP2: true}\n";
     else if (settings.httpVersion === "2.0")
       code += "\tclient.Transport = &http.Transport{ForceAttemptHTTP2: true}\n";
     client = "client";

@@ -5,7 +5,12 @@ import { toPythonCurlCffi } from "./generators/python/curl_cffi.ts";
 import { toGo } from "./generators/go.ts";
 import { renderOb2Dynamic } from "./ob2-dynamic.ts";
 
-export type Ob2Output = "curl" | "python" | "python-httpx" | "python-curl-cffi" | "go";
+export type Ob2Output =
+  | "curl"
+  | "python"
+  | "python-httpx"
+  | "python-curl-cffi"
+  | "go";
 
 export interface Ob2Settings {
   autoRedirect?: boolean;
@@ -26,7 +31,6 @@ function boolean(value: string, field: string): boolean {
 function encodeContent(body: string): string {
   return encodeURIComponent(body).replace(/%26/gi, "&").replace(/%3D/gi, "=");
 }
-
 
 type Pair = [string, string];
 
@@ -185,7 +189,9 @@ function parseOb2(block: string): { args: string[]; settings: Ob2Settings } {
       case "httpVersion":
         settings.httpVersion = quoted(value, field);
         if (!["1.0", "1.1", "2.0", "3.0"].includes(settings.httpVersion)) {
-          throw new CCError("Unsupported OB2 httpVersion: " + settings.httpVersion);
+          throw new CCError(
+            "Unsupported OB2 httpVersion: " + settings.httpVersion,
+          );
         }
         break;
       case "httpLibrary":
@@ -212,7 +218,10 @@ function parseOb2(block: string): { args: string[]; settings: Ob2Settings } {
   if (contentType && !hasContentType) {
     headers.push(["Content-Type", contentType]);
   }
-  if (cookies.length && !headers.some(([name]) => name.toLowerCase() === "cookie")) {
+  if (
+    cookies.length &&
+    !headers.some(([name]) => name.toLowerCase() === "cookie")
+  ) {
     headers.push([
       "Cookie",
       cookies.map(([key, value]) => key + "=" + value).join("; "),
@@ -225,7 +234,12 @@ function parseOb2(block: string): { args: string[]; settings: Ob2Settings } {
     args.push("--header", name + ": " + value);
   }
   if (body || method !== "GET") {
-    args.push("--data-raw", settings.urlEncodeContent && !/<[A-Za-z_][A-Za-z0-9_.]*>/.test(body) ? encodeContent(body) : body);
+    args.push(
+      "--data-raw",
+      settings.urlEncodeContent && !/<[A-Za-z_][A-Za-z0-9_.]*>/.test(body)
+        ? encodeContent(body)
+        : body,
+    );
   }
   return { args, settings };
 }
@@ -251,14 +265,22 @@ export function fromOb2(block: string, output: Ob2Output): string {
     settings.urlEncodeContent === true ||
     settings.ignoreCertificateValidation !== undefined ||
     settings.httpVersion !== undefined ||
-    (output === "python-curl-cffi" && settings.httpLibrary === "CurlImpersonate");
+    (output === "python-curl-cffi" &&
+      settings.httpLibrary === "CurlImpersonate");
   if (output === "python" && settings.httpVersion === "2.0") {
     throw new CCError("Python requests cannot force HTTP/2");
   }
-  if (settings.httpVersion === "3.0" && output !== "python-curl-cffi" && output !== "curl") {
+  if (
+    settings.httpVersion === "3.0" &&
+    output !== "python-curl-cffi" &&
+    output !== "curl"
+  ) {
     throw new CCError("This output does not support HTTP/3");
   }
-  const dynamic = output === "curl" ? null : renderOb2Dynamic(args, output, settings, advanced);
+  const dynamic =
+    output === "curl"
+      ? null
+      : renderOb2Dynamic(args, output, settings, advanced);
   if (
     output === "curl" &&
     args.some((arg) => /<[A-Za-z_][A-Za-z0-9_.]*>/.test(arg))
@@ -270,10 +292,11 @@ export function fromOb2(block: string, output: Ob2Output): string {
   const profile = /^\s*(?:httpLibrary|curlImpersonateBrowserProfile)\s*=/m.test(
     block,
   );
-  const note = profile && output !== "python-curl-cffi"
-    ? (output === "go" ? "//" : "#") +
-      " OB2 transport profile omitted; verify network behavior.\n"
-    : "";
+  const note =
+    profile && output !== "python-curl-cffi"
+      ? (output === "go" ? "//" : "#") +
+        " OB2 transport profile omitted; verify network behavior.\n"
+      : "";
   if (dynamic !== null) return note + dynamic;
   switch (output) {
     case "python":
@@ -287,17 +310,24 @@ export function fromOb2(block: string, output: Ob2Output): string {
     case "curl": {
       const curlArgs = [...args];
       if (settings.autoRedirect === true) curlArgs.push("--location");
-      if (settings.ignoreCertificateValidation === true) curlArgs.push("--insecure");
+      if (settings.ignoreCertificateValidation === true)
+        curlArgs.push("--insecure");
       if (settings.httpVersion) {
         curlArgs.push(
-          settings.httpVersion === "2.0" ? "--http2" :
-          settings.httpVersion === "3.0" ? "--http3" :
-          settings.httpVersion === "1.0" ? "--http1.0" : "--http1.1",
+          settings.httpVersion === "2.0"
+            ? "--http2"
+            : settings.httpVersion === "3.0"
+              ? "--http3"
+              : settings.httpVersion === "1.0"
+                ? "--http1.0"
+                : "--http1.1",
         );
       }
       return (
         note +
-        curlArgs.map((arg) => "'" + arg.replace(/'/g, "'\\''") + "'").join(" ") +
+        curlArgs
+          .map((arg) => "'" + arg.replace(/'/g, "'\\''") + "'")
+          .join(" ") +
         "\n"
       );
     }
