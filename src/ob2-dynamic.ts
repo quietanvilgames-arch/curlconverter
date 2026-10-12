@@ -161,11 +161,23 @@ export function renderOb2Dynamic(
   let code =
     'package main\n\nimport (\n\t"fmt"\n\t"io"\n\t"log"\n\t"net/http"\n';
   if (request.body !== undefined) code += '\t"strings"\n';
+  if (settings.ignoreCertificateValidation === true)
+    code += '\t"crypto/tls"\n';
+  if (settings.urlEncodeContent === true &&
+      request.body !== undefined &&
+      /<[A-Za-z_][A-Za-z0-9_.]*>/.test(request.body))
+    code += '\t"net/url"\n';
   code += ")\n\nfunc main() {\n";
   for (const v of vars) code += "\t" + v.go + ' := ""\n';
   code += "\n";
   if (request.body !== undefined) {
-    code += "\tbody := strings.NewReader(" + go(request.body) + ")\n";
+    let value = go(request.body);
+    if (settings.urlEncodeContent === true &&
+        /<[A-Za-z_][A-Za-z0-9_.]*>/.test(request.body)) {
+      value = 'strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(url.QueryEscape(' +
+        value + '), "+", "%20"), "%26", "&"), "%3D", "=")';
+    }
+    code += "\tbody := strings.NewReader(" + value + ")\n";
   }
   code +=
     "\treq, err := http.NewRequest(" + JSON.stringify(request.method) + ", ";
@@ -178,7 +190,19 @@ export function renderOb2Dynamic(
   for (const [name, value] of request.headers) {
     code += "\treq.Header.Add(" + go(name) + ", " + go(value) + ")\n";
   }
-  code += "\tresp, err := (&http.Client{}).Do(req)\n";
+  let client = "&http.Client{}";
+  if (settings.autoRedirect === false || settings.ignoreCertificateValidation === true ||
+      settings.httpVersion === "2.0") {
+    code += "\tclient := &http.Client{}\n";
+    if (settings.autoRedirect === false)
+      code += "\tclient.CheckRedirect = func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }\n";
+    if (settings.ignoreCertificateValidation === true)
+      code += "\tclient.Transport = &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, ForceAttemptHTTP2: true}\n";
+    else if (settings.httpVersion === "2.0")
+      code += "\tclient.Transport = &http.Transport{ForceAttemptHTTP2: true}\n";
+    client = "client";
+  }
+  code += "\tresp, err := " + client + ".Do(req)\n";
   code += "\tif err != nil { log.Fatal(err) }\n";
   code += "\tdefer resp.Body.Close()\n";
   code += "\tresponseBody, err := io.ReadAll(resp.Body)\n";
