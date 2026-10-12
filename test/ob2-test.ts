@@ -123,14 +123,17 @@ test("OB2 CLI accepts a multiline block on stdin without a dash", (t) => {
 
 test("OB2 preserves explicit Cookie and HTTP options", (t) => {
   const block = sample
-    .replace("  method = POST", [
+    .replace(
       "  method = POST",
-      "  autoRedirect = False",
-      "  urlEncodeContent = True",
-      "  curlUseBrowserHeaders = False",
-      "  ignoreCertificateValidation = False",
-      '  httpVersion = "2.0"',
-    ].join("\n"))
+      [
+        "  method = POST",
+        "  autoRedirect = False",
+        "  urlEncodeContent = True",
+        "  curlUseBrowserHeaders = False",
+        "  ignoreCertificateValidation = False",
+        '  httpVersion = "2.0"',
+      ].join("\n"),
+    )
     .replace('("X-Label", "hello")', '("Cookie", "<out1>")')
     .replace(/^  \$".*"$/m, '  $"name=<input.USER>&code=<input.PASS>"');
   const args = ob2ToCurlArgs(block);
@@ -162,7 +165,13 @@ test("OB2 URL encoding handles literal bodies and checks booleans", (t) => {
     .replace(/^  \$".*"$/m, '  $"name=hello world&code=1"');
   t.ok(ob2ToCurlArgs(block).includes("name=hello%20world&code=1"));
   t.throws(
-    () => ob2ToCurlArgs(sample.replace("  method = POST", "  method = POST\n  autoRedirect = Maybe")),
+    () =>
+      ob2ToCurlArgs(
+        sample.replace(
+          "  method = POST",
+          "  method = POST\n  autoRedirect = Maybe",
+        ),
+      ),
     /must be True or False/,
   );
   t.end();
