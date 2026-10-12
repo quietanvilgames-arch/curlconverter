@@ -39,7 +39,11 @@ export function _toPythonHttpx(
   const request = getFirst(requests, warnings);
   const firstUrl = request.urls[0];
 
-  if (request.multipartUploads || firstUrl.uploadFile || request.dataReadsFile) {
+  if (
+    request.multipartUploads ||
+    firstUrl.uploadFile ||
+    request.dataReadsFile
+  ) {
     throw new CCError(
       "HTTPX output does not yet support multipart uploads or file-backed request bodies",
     );
@@ -51,7 +55,9 @@ export function _toPythonHttpx(
     throw new CCError("HTTPX output does not yet support cookie files");
   }
   if (firstUrl.auth && request.authType !== "basic") {
-    throw new CCError("HTTPX output does not yet support this authentication type");
+    throw new CCError(
+      "HTTPX output does not yet support this authentication type",
+    );
   }
   if (request.followRedirectsTrusted) {
     throw new CCError("HTTPX output does not support --location-trusted");
@@ -66,7 +72,9 @@ export function _toPythonHttpx(
     ]);
   }
 
-  const headers = Array.from(request.headers).filter(([, value]) => value !== null);
+  const headers = Array.from(request.headers).filter(
+    ([, value]) => value !== null,
+  );
   let code = "import httpx\n\n";
   if (headers.length) {
     code += "headers = [\n";

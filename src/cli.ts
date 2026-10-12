@@ -488,14 +488,27 @@ if (inputMode !== "curl" && inputMode !== "ob2") {
   exitWithError(new CCError("unexpected --input: " + inputMode), verbose);
 }
 if (inputMode === "ob2") {
-  if (!commandFromStdin || seenArgs.some(([arg]) => !["stdin", "input", "language", "verbose"].includes(arg))) {
-    exitWithError(new CCError("OB2 input requires stdin (-) and no curl options"), verbose);
+  if (
+    !commandFromStdin ||
+    seenArgs.some(
+      ([arg]) => !["stdin", "input", "language", "verbose"].includes(arg),
+    )
+  ) {
+    exitWithError(
+      new CCError("OB2 input requires stdin (-) and no curl options"),
+      verbose,
+    );
   }
   if (!["curl", "python", "python-httpx", "go"].includes(language)) {
-    exitWithError(new CCError("OB2 output must be curl, python, python-httpx, or go"), verbose);
+    exitWithError(
+      new CCError("OB2 output must be curl, python, python-httpx, or go"),
+      verbose,
+    );
   }
   try {
-    process.stdout.write(fromOb2(fs.readFileSync(0, "utf8"), language as Ob2Output));
+    process.stdout.write(
+      fromOb2(fs.readFileSync(0, "utf8"), language as Ob2Output),
+    );
   } catch (e) {
     exitWithError(e, verbose);
   }
@@ -590,4 +603,3 @@ warning: curlconverter 'curl example.com' -> curlconverter example.com`);
 
 printWarnings(warnings, verbose);
 process.stdout.write(code);
-

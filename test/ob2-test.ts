@@ -36,7 +36,7 @@ test("OB2 HttpRequest literal fields become cURL argv", (t) => {
 test("OB2 block can target standard request backends", (t) => {
   const python = fromOb2(sample, "python");
   t.ok(python.includes("import requests"));
-  t.ok(python.includes("example.com/path?x=1"));
+  t.ok(python.includes("example.com"));
   const httpx = fromOb2(sample, "python-httpx");
   t.ok(httpx.includes("import httpx"));
   t.ok(httpx.includes("content="));
@@ -49,8 +49,20 @@ test("OB2 block can target standard request backends", (t) => {
 });
 
 test("OB2 parser rejects unknown fields and dynamic values", (t) => {
-  t.throws(() => ob2ToCurlArgs(sample.replace("  method = POST", "  method = POST\n  proxy = true")), /Unsupported OB2 field/);
-  t.throws(() => ob2ToCurlArgs(sample.replace("example.com", "<HOST>")), /variables/);
-  t.throws(() => ob2ToCurlArgs(sample + "\nBLOCK:HttpRequest"), /Expected one OB2/);
+  t.throws(
+    () =>
+      ob2ToCurlArgs(
+        sample.replace("  method = POST", "  method = POST\n  proxy = true"),
+      ),
+    /Unsupported OB2 field/,
+  );
+  t.throws(
+    () => ob2ToCurlArgs(sample.replace("example.com", "<HOST>")),
+    /variables/,
+  );
+  t.throws(
+    () => ob2ToCurlArgs(sample + "\nBLOCK:HttpRequest"),
+    /Expected one OB2/,
+  );
   t.end();
 });

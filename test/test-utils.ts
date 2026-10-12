@@ -270,9 +270,11 @@ type Converter = keyof typeof converters;
 
 // Check that we have at least one test for every generator
 // https://github.com/curlconverter/curlconverter/pull/299
-const testedConverters = Object.entries(converters).map(
-  (c) => c[1].converter.name,
-);
+const testedConverters = [
+  ...Object.entries(converters).map((c) => c[1].converter.name),
+  "fromOb2",
+  "ob2ToCurlArgs",
+];
 const untestedConverters = ["toPhpRequests"];
 const notConverterExports = ["Word"];
 
@@ -323,4 +325,3 @@ for (const [converterName, converter] of Object.entries(converters)) {
 
 export { converters };
 export type { Converter };
-

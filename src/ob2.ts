@@ -36,9 +36,7 @@ function pairs(value: string, field: string): Pair[] {
   const output: Pair[] = [];
   while (rest) {
     const match =
-      /^\(\s*("(?:\\.|[^"\\])*")\s*,\s*("(?:\\.|[^"\\])*")\s*\)/.exec(
-        rest,
-      );
+      /^\(\s*("(?:\\.|[^"\\])*")\s*,\s*("(?:\\.|[^"\\])*")\s*\)/.exec(rest);
     if (!match) {
       throw new CCError("OB2 " + field + " contains an unsupported tuple");
     }
@@ -133,15 +131,22 @@ export function ob2ToCurlArgs(block: string): string[] {
     throw new CCError("OB2 URL must start with http:// or https://");
   }
   const args = ["curl", "--request", method, url];
-  const hasContentType = headers.some(([name]) => name.toLowerCase() === "content-type");
+  const hasContentType = headers.some(
+    ([name]) => name.toLowerCase() === "content-type",
+  );
   if (contentType && !hasContentType) {
     headers.push(["Content-Type", contentType]);
   }
   if (cookies.length) {
     if (headers.some(([name]) => name.toLowerCase() === "cookie")) {
-      throw new CCError("OB2 block contains both a Cookie header and customCookies");
+      throw new CCError(
+        "OB2 block contains both a Cookie header and customCookies",
+      );
     }
-    headers.push(["Cookie", cookies.map(([key, value]) => key + "=" + value).join("; ")]);
+    headers.push([
+      "Cookie",
+      cookies.map(([key, value]) => key + "=" + value).join("; "),
+    ]);
   }
   for (const [name, value] of headers) {
     if (!name || /[:\r\n]/.test(name) || /[\r\n]/.test(value)) {
@@ -157,7 +162,9 @@ export function ob2ToCurlArgs(block: string): string[] {
 
 export function fromOb2(block: string, output: Ob2Output): string {
   const args = ob2ToCurlArgs(block);
-  const profile = /^\s*(?:httpLibrary|curlImpersonateBrowserProfile)\s*=/m.test(block);
+  const profile = /^\s*(?:httpLibrary|curlImpersonateBrowserProfile)\s*=/m.test(
+    block,
+  );
   const note = profile
     ? (output === "go" ? "//" : "#") +
       " OB2 transport profile omitted; verify network behavior.\n"
@@ -170,6 +177,10 @@ export function fromOb2(block: string, output: Ob2Output): string {
     case "go":
       return note + toGo(args);
     case "curl":
-      return note + args.map((arg) => "'" + arg.replace(/'/g, "'\\''") + "'").join(" ") + "\n";
+      return (
+        note +
+        args.map((arg) => "'" + arg.replace(/'/g, "'\\''") + "'").join(" ") +
+        "\n"
+      );
   }
 }
