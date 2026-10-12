@@ -29,7 +29,12 @@ function boolean(value: string, field: string): boolean {
 }
 
 function encodeContent(body: string): string {
-  return encodeURIComponent(body).replace(/%26/gi, "&").replace(/%3D/gi, "=");
+  return encodeURIComponent(body)
+    .replace(/[!\'()*]/g, (char) =>
+      "%" + char.charCodeAt(0).toString(16).toUpperCase(),
+    )
+    .replace(/%26/gi, "&")
+    .replace(/%3D/gi, "=");
 }
 
 type Pair = [string, string];
