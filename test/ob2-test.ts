@@ -1,4 +1,6 @@
 import test from "tape";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { fromOb2, ob2ToCurlArgs } from "../src/ob2.ts";
 
 const sample = `BLOCK:HttpRequest
@@ -103,5 +105,18 @@ test("OB2 parser rejects unknown fields and multiple blocks", (t) => {
     () => ob2ToCurlArgs(sample + "\nBLOCK:HttpRequest"),
     /Expected one OB2/,
   );
+  t.end();
+});
+
+test("OB2 CLI accepts a multiline block on stdin without a dash", (t) => {
+  const cli = fileURLToPath(new URL("../src/cli.js", import.meta.url));
+  const result = spawnSync(
+    process.execPath,
+    [cli, "--input", "ob2", "--language", "python-httpx"],
+    { input: sample, encoding: "utf8" },
+  );
+  t.equal(result.status, 0, result.stderr);
+  t.ok(result.stdout.includes("import httpx"));
+  t.ok(result.stdout.includes("example.com/path?x=1"));
   t.end();
 });
