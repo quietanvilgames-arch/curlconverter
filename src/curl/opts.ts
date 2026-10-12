@@ -959,6 +959,7 @@ export interface GlobalConfig {
 
   // These are specific to the curlconverter cli
   language?: string;
+  input?: string;
   stdin?: boolean;
 }
 
@@ -1060,6 +1061,7 @@ function pushArgValue(
       global_[argName] = value;
       break;
 
+    case "input": // --input is a curlconverter specific option
     case "language": // --language is a curlconverter specific option
       global_[argName] = value.toString();
       return;
