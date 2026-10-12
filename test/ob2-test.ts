@@ -51,7 +51,7 @@ test("OB2 interpolation emits blank variables for each target", (t) => {
   const block = sample
     .replace("customHeaders = {", "customHeaders = ${")
     .replace('"X-Label", "hello"', '"X-Label", "<input.TAG>"')
-    .replace(/^  \\$".*"$/m, '  $"account=<input.USER>&code=<input.PASS>"');
+    .replace(/^  \$".*"$/m, '  $"account=<input.USER>&code=<input.PASS>"');
   t.deepEqual(
     ob2ToCurlArgs(sample.replace("customHeaders = {", "customHeaders = ${")),
     ob2ToCurlArgs(sample),
