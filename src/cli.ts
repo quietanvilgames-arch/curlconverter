@@ -488,7 +488,9 @@ const inputMode = global_.input || "curl";
 
 async function readOb2Input(): Promise<string> {
   if (!process.stdin.isTTY) return fs.readFileSync(0, "utf8");
-  console.error("Paste one OB2 HttpRequest block; conversion starts after ENDBLOCK:");
+  console.error(
+    "Paste one OB2 HttpRequest block; conversion starts after ENDBLOCK:",
+  );
   const lines: string[] = [];
   const input = readline.createInterface({ input: process.stdin });
   for await (const line of input) {
@@ -509,10 +511,7 @@ if (inputMode === "ob2") {
       ([arg]) => !["stdin", "input", "language", "verbose"].includes(arg),
     )
   ) {
-    exitWithError(
-      new CCError("OB2 input does not accept curl options"),
-      verbose,
-    );
+    exitWithError(new CCError("OB2 input does not accept curl options"), verbose);
   }
   if (!["curl", "python", "python-httpx", "go"].includes(language)) {
     exitWithError(
@@ -521,9 +520,7 @@ if (inputMode === "ob2") {
     );
   }
   try {
-    process.stdout.write(
-      fromOb2(await readOb2Input(), language as Ob2Output),
-    );
+    process.stdout.write(fromOb2(await readOb2Input(), language as Ob2Output));
   } catch (e) {
     exitWithError(e, verbose);
   }
