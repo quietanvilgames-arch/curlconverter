@@ -18,6 +18,7 @@ jobs:
           CXXFLAGS: -std=c++20
         run: npm ci
       - run: npm run lint
+      - run: npx prettier src/cli.ts | diff -u src/cli.ts - || true
       - run: npx prettier --check .
 
   test:
