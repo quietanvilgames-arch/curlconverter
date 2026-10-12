@@ -7,6 +7,45 @@ type TemplateVariable = { source: string; python: string; go: string };
 
 const marker = /<([A-Za-z_][A-Za-z0-9_.]*)>/g;
 
+const browserProfiles: Record<string, string> = {
+  Chrome99: "chrome99",
+  Chrome100: "chrome100",
+  Chrome101: "chrome101",
+  Chrome104: "chrome104",
+  Chrome107: "chrome107",
+  Chrome110: "chrome110",
+  Chrome116: "chrome116",
+  Chrome119: "chrome119",
+  Chrome120: "chrome120",
+  Chrome123: "chrome123",
+  Chrome124: "chrome124",
+  Chrome131: "chrome131",
+  Chrome133a: "chrome133a",
+  Chrome136: "chrome136",
+  Chrome142: "chrome142",
+  Chrome145: "chrome145",
+  Chrome146: "chrome146",
+  Chrome99Android: "chrome99_android",
+  Chrome131Android: "chrome131_android",
+  Edge99: "edge99",
+  Edge101: "edge101",
+  Safari153: "safari153",
+  Safari155: "safari155",
+  Safari170: "safari170",
+  Safari172Ios: "safari172_ios",
+  Safari180: "safari180",
+  Safari180Ios: "safari180_ios",
+  Safari184: "safari184",
+  Safari184Ios: "safari184_ios",
+  Safari260: "safari260",
+  Safari260Ios: "safari260_ios",
+  Firefox133: "firefox133",
+  Firefox135: "firefox135",
+  Firefox144: "firefox144",
+  Firefox147: "firefox147",
+  Tor145: "tor145",
+};
+
 function variables(values: string[]): TemplateVariable[] {
   const seen = new Set<string>();
   const names = new Set<string>();
@@ -163,12 +202,11 @@ export function renderOb2Dynamic(
             ) +
             ",\n";
         if (settings.httpLibrary === "CurlImpersonate") {
-          if (settings.curlImpersonateBrowserProfile !== "Safari260Ios")
-            throw new CCError(
-              "Unsupported curl_cffi browser profile: " +
-                settings.curlImpersonateBrowserProfile,
-            );
-          code += "        impersonate='safari260_ios',\n";
+          const profile = settings.curlImpersonateBrowserProfile;
+          const target = profile && browserProfiles[profile];
+          if (!target)
+            throw new CCError("Unsupported curl_cffi browser profile: " + profile);
+          code += "        impersonate=" + reprStr(target) + ",\n";
           if (settings.curlUseBrowserHeaders !== undefined)
             code +=
               "        default_headers=" +
