@@ -2,22 +2,21 @@ import { CCError } from "./utils.ts";
 import { toPython } from "./generators/python/python.ts";
 import { toPythonHttpx } from "./generators/python/httpx.ts";
 import { toGo } from "./generators/go.ts";
+import { renderOb2Dynamic } from "./ob2-dynamic.ts";
 
 export type Ob2Output = "curl" | "python" | "python-httpx" | "go";
 
 type Pair = [string, string];
 
 function quoted(value: string, field: string): string {
-  if (!/^"(?:\\.|[^"\\])*"$/.test(value)) {
+  const literal = value.startsWith('$"') ? value.slice(1) : value;
+  if (!/^"(?:\\.|[^"\\])*"$/.test(literal)) {
     throw new CCError("OB2 " + field + " must be a quoted literal");
   }
   try {
-    const decoded: unknown = JSON.parse(value);
+    const decoded: unknown = JSON.parse(literal);
     if (typeof decoded !== "string") {
       throw new Error("not a string");
-    }
-    if (/<[A-Za-z_][A-Za-z0-9_]*>/.test(decoded)) {
-      throw new CCError("OB2 variables in " + field + " are not supported");
     }
     return decoded;
   } catch (e) {
@@ -122,6 +121,12 @@ export function ob2ToCurlArgs(block: string): string[] {
     let value = match[2];
     if (
       (field === "customHeaders" || field === "customCookies") &&
+      value.startsWith("${")
+    ) {
+      value = value.slice(1);
+    }
+    if (
+      (field === "customHeaders" || field === "customCookies") &&
       value.startsWith("{")
     ) {
       while (tupleListDepth(value) > 0 && i + 1 < lines.length - 1) {
@@ -197,6 +202,10 @@ export function ob2ToCurlArgs(block: string): string[] {
 
 export function fromOb2(block: string, output: Ob2Output): string {
   const args = ob2ToCurlArgs(block);
+  const dynamic = output === "curl" ? null : renderOb2Dynamic(args, output);
+  if (output === "curl" && args.some((arg) => /<[A-Za-z_][A-Za-z0-9_.]*>/.test(arg))) {
+    throw new CCError("Dynamic OB2 variables cannot be represented in cURL output yet");
+  }
   const profile = /^\s*(?:httpLibrary|curlImpersonateBrowserProfile)\s*=/m.test(
     block,
   );
@@ -204,6 +213,7 @@ export function fromOb2(block: string, output: Ob2Output): string {
     ? (output === "go" ? "//" : "#") +
       " OB2 transport profile omitted; verify network behavior.\n"
     : "";
+  if (dynamic !== null) return note + dynamic;
   switch (output) {
     case "python":
       return note + toPython(args);

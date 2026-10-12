@@ -47,6 +47,30 @@ test("OB2 accepts headers and cookies split across lines", (t) => {
   t.end();
 });
 
+test("OB2 interpolation emits blank variables for each target", (t) => {
+  const block = sample
+    .replace("customHeaders = {", "customHeaders = ${")
+    .replace('"X-Label", "hello"', '"X-Label", "<input.TAG>"')
+    .replace(/^  \\$".*"$/m, '  $"account=<input.USER>&code=<input.PASS>"');
+  t.deepEqual(
+    ob2ToCurlArgs(sample.replace("customHeaders = {", "customHeaders = ${")),
+    ob2ToCurlArgs(sample),
+  );
+  const python = fromOb2(block, "python");
+  t.ok(python.includes('input_user = ""'));
+  t.ok(python.includes('input_pass = ""'));
+  t.ok(python.includes('input_tag = ""'));
+  t.ok(python.includes("input_user +"));
+  const httpx = fromOb2(block, "python-httpx");
+  t.ok(httpx.includes("import httpx"));
+  t.ok(httpx.includes("content="));
+  const go = fromOb2(block, "go");
+  t.ok(go.includes('inputUser := ""'));
+  t.ok(go.includes("strings.NewReader("));
+  t.throws(() => fromOb2(block, "curl"), /cannot be represented/);
+  t.end();
+});
+
 test("OB2 block can target standard request backends", (t) => {
   const python = fromOb2(sample, "python");
   t.ok(python.includes("import requests"));

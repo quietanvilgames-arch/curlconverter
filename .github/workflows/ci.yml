@@ -17,6 +17,8 @@ jobs:
       - env: # TODO: remove this
           CXXFLAGS: -std=c++20
         run: npm ci
+      - run: npx prettier --write src/ob2.ts src/ob2-dynamic.ts test/ob2-test.ts
+      - run: git diff -- src/ob2.ts src/ob2-dynamic.ts test/ob2-test.ts
       - run: npm run lint
       - run: npx prettier --check .
 
