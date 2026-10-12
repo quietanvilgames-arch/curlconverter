@@ -132,7 +132,7 @@ after `ENDBLOCK`. Conversion starts immediately:
 curlconverter --input ob2 --language python-httpx
 ```
 
-Use `python`, `go`, or `curl` as the output language instead. You can also
+Use `python`, `python-curl-cffi`, `go`, or `curl` as the output language instead. You can also
 pipe a multiline block to the same command. In PowerShell, for example:
 
 ```powershell
@@ -154,9 +154,14 @@ with a standard body and content type, like the output of `curl_to_lolicode.py`.
 It rejects unknown fields, other body types and multiple blocks. Interpolated
 header lists (`customHeaders = ${...}`) and placeholders such as
 `<input.USER>` generate blank target-language variables for Python and Go.
-Dynamic cURL output is not yet supported. OB2 transport and browser
-profile settings do not transfer to these ordinary HTTP clients; generated
-code marks their omission for review.
+Dynamic cURL output is not yet supported. Explicit `autoRedirect`,
+`ignoreCertificateValidation`, `urlEncodeContent`, and `httpVersion` options
+are applied to supported outputs. If `customCookies` and an explicit `Cookie`
+header appear together, the explicit header takes precedence for this request.
+`python-curl-cffi` maps `Safari260Ios` to `safari260_ios` and respects
+`curlUseBrowserHeaders = False`. Other transport profiles are marked as omitted
+or rejected when a target cannot match them. Python requests cannot force
+HTTP/2; for HTTPX HTTP/2 output install `httpx[http2]`.
 
 ### Usage as a library
 
