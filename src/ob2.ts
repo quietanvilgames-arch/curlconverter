@@ -274,11 +274,22 @@ export function fromOb2(block: string, output: Ob2Output): string {
       return note + toPythonCurlCffi(args);
     case "go":
       return note + toGo(args);
-    case "curl":
+    case "curl": {
+      const curlArgs = [...args];
+      if (settings.autoRedirect === true) curlArgs.push("--location");
+      if (settings.ignoreCertificateValidation === true) curlArgs.push("--insecure");
+      if (settings.httpVersion) {
+        curlArgs.push(
+          settings.httpVersion === "2.0" ? "--http2" :
+          settings.httpVersion === "3.0" ? "--http3" :
+          settings.httpVersion === "1.0" ? "--http1.0" : "--http1.1",
+        );
+      }
       return (
         note +
-        args.map((arg) => "'" + arg.replace(/'/g, "'\\''") + "'").join(" ") +
+        curlArgs.map((arg) => "'" + arg.replace(/'/g, "'\\''") + "'").join(" ") +
         "\n"
       );
+    }
   }
 }
