@@ -14,6 +14,10 @@ export type Ob2Output =
 
 export interface Ob2Settings {
   autoRedirect?: boolean;
+  maxNumberOfRedirects?: number;
+  timeoutMilliseconds?: number;
+  alwaysSendContent?: boolean;
+  readResponseContent?: boolean;
   urlEncodeContent?: boolean;
   curlUseBrowserHeaders?: boolean;
   ignoreCertificateValidation?: boolean;
@@ -187,11 +191,21 @@ function parseOb2(block: string): { args: string[]; settings: Ob2Settings } {
         cookies = pairs(value, field);
         break;
       case "autoRedirect":
+      case "alwaysSendContent":
+      case "readResponseContent":
       case "urlEncodeContent":
       case "curlUseBrowserHeaders":
       case "ignoreCertificateValidation":
         settings[field] = boolean(value, field);
         break;
+      case "maxNumberOfRedirects":
+      case "timeoutMilliseconds": {
+        if (!/^[0-9]+$/.test(value) || !Number.isSafeInteger(Number(value))) {
+          throw new CCError("OB2 " + field + " must be a nonnegative integer");
+        }
+        settings[field] = Number(value);
+        break;
+      }
       case "httpVersion":
         settings.httpVersion = quoted(value, field);
         if (!["1.0", "1.1", "2.0", "3.0"].includes(settings.httpVersion)) {
@@ -245,7 +259,7 @@ function parseOb2(block: string): { args: string[]; settings: Ob2Settings } {
     }
     args.push("--header", name + ": " + value);
   }
-  if (body || method !== "GET") {
+  if (body || method !== "GET" || settings.alwaysSendContent === true) {
     args.push(
       "--data-raw",
       settings.urlEncodeContent && !/<[A-Za-z_][A-Za-z0-9_.]*>/.test(body)
@@ -259,6 +273,10 @@ function parseOb2(block: string): { args: string[]; settings: Ob2Settings } {
 export function ob2ToCurlArgs(block: string): string[] {
   const { args, settings } = parseOb2(block);
   if (settings.autoRedirect === true) args.push("--location");
+  if (settings.maxNumberOfRedirects !== undefined)
+    args.push("--max-redirs", String(settings.maxNumberOfRedirects));
+  if (settings.timeoutMilliseconds !== undefined)
+    args.push("--max-time", String(settings.timeoutMilliseconds / 1000));
   if (settings.ignoreCertificateValidation === true) args.push("--insecure");
   if (settings.httpVersion) {
     args.push(
@@ -278,6 +296,10 @@ export function fromOb2(block: string, output: Ob2Output): string {
   const { args, settings } = parseOb2(block);
   const advanced =
     settings.autoRedirect !== undefined ||
+    settings.maxNumberOfRedirects !== undefined ||
+    settings.timeoutMilliseconds !== undefined ||
+    settings.readResponseContent === false ||
+    settings.alwaysSendContent === true ||
     settings.urlEncodeContent === true ||
     settings.ignoreCertificateValidation !== undefined ||
     settings.httpVersion !== undefined ||
@@ -331,6 +353,10 @@ export function fromOb2(block: string, output: Ob2Output): string {
     case "curl": {
       const curlArgs = [...args];
       if (settings.autoRedirect === true) curlArgs.push("--location");
+      if (settings.maxNumberOfRedirects !== undefined)
+        curlArgs.push("--max-redirs", String(settings.maxNumberOfRedirects));
+      if (settings.timeoutMilliseconds !== undefined)
+        curlArgs.push("--max-time", String(settings.timeoutMilliseconds / 1000));
       if (settings.ignoreCertificateValidation === true)
         curlArgs.push("--insecure");
       if (settings.httpVersion) {
