@@ -215,6 +215,11 @@ import {
   supportedArgs as supportedArgsPythonHttp,
 } from "./generators/python/http.ts";
 import {
+  _toPythonHttpx,
+  toPythonHttpxWarn,
+  supportedArgs as supportedArgsPythonHttpx,
+} from "./generators/python/httpx.ts";
+import {
   _toR,
   toRWarn,
   supportedArgs as supportedArgsR,
@@ -334,6 +339,7 @@ const translate: {
   "powershell-webrequest": [_toPowershellWebRequest, toPowershellWebRequestWarn, supportedArgsPowershellWebRequest],
   python: [_toPython, toPythonWarn, supportedArgsPython],
   "python-http": [_toPythonHttp, toPythonHttpWarn, supportedArgsPythonHttp],
+  "python-httpx": [_toPythonHttpx, toPythonHttpxWarn, supportedArgsPythonHttpx],
   "python-httpclient": [_toPythonHttp, toPythonHttpWarn, supportedArgsPythonHttp], // undocumented alias
   r: [_toR, toRWarn, supportedArgsR],
   "r-httr": [_toR, toRWarn, supportedArgsR], // undocumented alias
@@ -388,6 +394,7 @@ language: the language to convert the curl command to. The choices are
   powershell-webrequest
   python (the default)
   python-http
+  python-httpx
   r
   r-httr2
   ruby
@@ -560,3 +567,4 @@ warning: curlconverter 'curl example.com' -> curlconverter example.com`);
 
 printWarnings(warnings, verbose);
 process.stdout.write(code);
+

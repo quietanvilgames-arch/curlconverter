@@ -102,7 +102,7 @@ Choose the output language by passing `--language <language>`. The options are
 - `perl`
 - `php`, `php-guzzle`, `php-requests`
 - `powershell`, `powershell-webrequest`
-- `python` (the default), `python-http`
+- `python` (the default), `python-http`, `python-httpx`
 - `r`, `r-httr2`
 - `ruby`, `ruby-httparty`
 - `rust`
@@ -110,6 +110,11 @@ Choose the output language by passing `--language <language>`. The options are
 - `wget`
 
 `--verbose` enables printing of conversion warnings and error tracebacks.
+
+`python-httpx` produces a single synchronous HTTPX request. Install the Python
+package with `pip install httpx` before running the generated code. Multipart
+uploads and file-backed bodies or queries currently raise an error. Review
+conversion warnings for cURL options that have no HTTPX equivalent.
 
 ### Usage as a library
 
@@ -149,3 +154,4 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md)
 ## License
 
 MIT © [Nick Carneiro](http://trillworks.com)
+

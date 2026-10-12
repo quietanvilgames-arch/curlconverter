@@ -220,6 +220,11 @@ const converters = {
     extension: ".py",
     converter: curlconverter.toPython,
   },
+  "python-httpx": {
+    name: "Python + HTTPX",
+    extension: ".py",
+    converter: curlconverter.toPythonHttpx,
+  },
   r: {
     name: "R",
     extension: ".r",
@@ -318,3 +323,4 @@ for (const [converterName, converter] of Object.entries(converters)) {
 
 export { converters };
 export type { Converter };
+

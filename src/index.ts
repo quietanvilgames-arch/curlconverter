@@ -68,6 +68,7 @@ export {
 } from "./generators/powershell.ts";
 export { toPython, toPythonWarn } from "./generators/python/python.ts";
 export { toPythonHttp, toPythonHttpWarn } from "./generators/python/http.ts";
+export { toPythonHttpx, toPythonHttpxWarn } from "./generators/python/httpx.ts";
 export { toR, toRWarn } from "./generators/r/httr.ts";
 export { toRHttr2, toRHttr2Warn } from "./generators/r/httr2.ts";
 export { toRuby, toRubyWarn } from "./generators/ruby/ruby.ts";
@@ -87,3 +88,4 @@ export { toNodeWarn as toNodeFetchWarn } from "./generators/javascript/javascrip
 
 export { CCError } from "./utils.ts";
 export type { Warnings } from "./Warnings.ts";
+
