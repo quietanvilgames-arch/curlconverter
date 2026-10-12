@@ -86,7 +86,7 @@ test("OB2 block can target standard request backends", (t) => {
   t.end();
 });
 
-test("OB2 parser rejects unknown fields and dynamic values", (t) => {
+test("OB2 parser rejects unknown fields and multiple blocks", (t) => {
   t.throws(
     () =>
       ob2ToCurlArgs(
@@ -94,10 +94,11 @@ test("OB2 parser rejects unknown fields and dynamic values", (t) => {
       ),
     /Unsupported OB2 field/,
   );
-  t.throws(
-    () => ob2ToCurlArgs(sample.replace("example.com", "<HOST>")),
-    /variables/,
+  const urlVariable = fromOb2(
+    sample.replace("example.com", "<HOST>"),
+    "python-httpx",
   );
+  t.ok(urlVariable.includes('host = ""'));
   t.throws(
     () => ob2ToCurlArgs(sample + "\nBLOCK:HttpRequest"),
     /Expected one OB2/,
