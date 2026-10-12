@@ -120,7 +120,10 @@ export function ob2ToCurlArgs(block: string): string[] {
     }
     const [, field] = match;
     let value = match[2];
-    if ((field === "customHeaders" || field === "customCookies") && value.startsWith("{")) {
+    if (
+      (field === "customHeaders" || field === "customCookies") &&
+      value.startsWith("{")
+    ) {
       while (tupleListDepth(value) > 0 && i + 1 < lines.length - 1) {
         value += " " + lines[++i];
       }

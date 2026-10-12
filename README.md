@@ -131,7 +131,7 @@ curlconverter --input ob2 --language curl - < request.ob2
 
 The JavaScript API is `fromOb2(block, "python-httpx")`, or
 `ob2ToCurlArgs(block)` to inspect the parsed cURL arguments. This accepts
-literal URL, method, header and cookie fields with a standard body and content
+literal URL, method, header and cookie fields (including multiline tuple lists) with a standard body and content
 type, like the output of `curl_to_lolicode.py`. It rejects unknown fields,
 variables, other body types and multiple blocks. OB2 transport and browser
 profile settings do not transfer to these ordinary HTTP clients; generated
