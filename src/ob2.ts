@@ -211,7 +211,12 @@ function parseOb2(block: string): { args: string[]; settings: Ob2Settings } {
         throw new CCError("Unsupported OB2 field: " + field);
     }
   }
-  if (!standard || url === undefined || body === undefined || contentType === undefined) {
+  if (
+    !standard ||
+    url === undefined ||
+    body === undefined ||
+    contentType === undefined
+  ) {
     throw new CCError("OB2 block requires a URL and TYPE:STANDARD");
   }
   if (url === "") url = "<input.URL>";
