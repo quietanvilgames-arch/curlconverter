@@ -158,9 +158,10 @@ Dynamic cURL output is not yet supported. Explicit `autoRedirect`,
 `ignoreCertificateValidation`, `urlEncodeContent`, and `httpVersion` options
 are applied to supported outputs. If `customCookies` and an explicit `Cookie`
 header appear together, the explicit header takes precedence for this request.
-`python-curl-cffi` maps `Safari260Ios` to `safari260_ios` and respects
-`curlUseBrowserHeaders = False`. Other transport profiles are marked as omitted
-or rejected when a target cannot match them. Python requests cannot force
+`python-curl-cffi` maps supported OB2 browser profiles (including
+`Safari260Ios` to `safari260_ios`) and respects `curlUseBrowserHeaders = False`.
+Other transports mark profiles as omitted; unsupported curl_cffi profiles fail
+with an explicit error. Python requests cannot force
 HTTP/2; for HTTPX HTTP/2 output install `httpx[http2]`.
 
 ### Usage as a library
