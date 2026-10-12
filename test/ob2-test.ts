@@ -120,3 +120,50 @@ test("OB2 CLI accepts a multiline block on stdin without a dash", (t) => {
   t.ok(result.stdout.includes("example.com/path?x=1"));
   t.end();
 });
+
+test("OB2 preserves explicit Cookie and HTTP options", (t) => {
+  const block = sample
+    .replace("  method = POST", [
+      "  method = POST",
+      "  autoRedirect = False",
+      "  urlEncodeContent = True",
+      "  curlUseBrowserHeaders = False",
+      "  ignoreCertificateValidation = False",
+      '  httpVersion = "2.0"',
+    ].join("\n"))
+    .replace('("X-Label", "hello")', '("Cookie", "<out1>")')
+    .replace(/^  \$".*"$/m, '  $"name=<input.USER>&code=<input.PASS>"');
+  const args = ob2ToCurlArgs(block);
+  t.ok(args.includes("Cookie: <out1>"));
+  t.notOk(args.some((arg) => arg.includes("session=a=b")));
+  const httpx = fromOb2(block, "python-httpx");
+  t.ok(httpx.includes("http2=True"));
+  t.ok(httpx.includes("verify=False") === false);
+  t.ok(httpx.includes("quote("));
+  t.ok(httpx.includes("out1 ="));
+  const cffi = fromOb2(block, "python-curl-cffi");
+  t.ok(cffi.includes("impersonate='safari260_ios'"));
+  t.ok(cffi.includes("default_headers=False"));
+  t.ok(cffi.includes("http_version='v2'"));
+  t.ok(cffi.includes("verify=True"));
+  t.ok(cffi.includes("allow_redirects=False"));
+  const go = fromOb2(block, "go");
+  t.ok(go.includes("http.ErrUseLastResponse"));
+  t.ok(go.includes("url.QueryEscape("));
+  t.ok(go.includes("ForceAttemptHTTP2: true"));
+  t.throws(() => fromOb2(block, "python"), /cannot force HTTP\/2/);
+  t.throws(() => fromOb2(block, "curl"), /cannot be represented/);
+  t.end();
+});
+
+test("OB2 URL encoding handles literal bodies and checks booleans", (t) => {
+  const block = sample
+    .replace("  method = POST", "  method = POST\n  urlEncodeContent = True")
+    .replace(/^  \$".*"$/m, '  $"name=hello world&code=1"');
+  t.ok(ob2ToCurlArgs(block).includes("name=hello%20world&code=1"));
+  t.throws(
+    () => ob2ToCurlArgs(sample.replace("  method = POST", "  method = POST\n  autoRedirect = Maybe")),
+    /must be True or False/,
+  );
+  t.end();
+});
