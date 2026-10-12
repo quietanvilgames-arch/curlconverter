@@ -157,6 +157,9 @@ header lists (`customHeaders = ${...}`) and placeholders such as
 Dynamic cURL output is not yet supported. Explicit `autoRedirect`, `maxNumberOfRedirects`, `timeoutMilliseconds`,
 `alwaysSendContent`, `readResponseContent`, `ignoreCertificateValidation`,
 `urlEncodeContent`, and `httpVersion` options are applied to supported outputs.
+OB2 defaults for redirects (enabled, up to eight), timeout (15 seconds), and
+certificate checks (disabled) also apply when omitted. Review generated TLS
+settings before using them outside OB2.
 An explicitly disabled response read cannot currently be represented in cURL
 output and produces an error. If `customCookies` and an explicit `Cookie`
 header appear together, the explicit header takes precedence for this request.

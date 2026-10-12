@@ -239,3 +239,22 @@ test("OB2 timeout, redirect count, response body and empty request body", (t) =>
   t.ok(fromOb2(empty, "go").includes('strings.NewReader("")'));
   t.end();
 });
+
+test("OB2 omitted request settings retain OB2 redirect and timeout defaults", (t) => {
+  const python = fromOb2(sample, "python");
+  t.ok(python.includes("client.max_redirects = 8"));
+  t.ok(python.includes("timeout=15"));
+  t.ok(python.includes("verify=False"));
+  const httpx = fromOb2(sample, "python-httpx");
+  t.ok(httpx.includes("follow_redirects=True"));
+  t.ok(httpx.includes("max_redirects=8"));
+  t.ok(httpx.includes("timeout=15"));
+  const cffi = fromOb2(sample, "python-curl-cffi");
+  t.ok(cffi.includes("allow_redirects=True"));
+  t.ok(cffi.includes("verify=False"));
+  const curl = fromOb2(sample, "curl");
+  t.ok(curl.includes("--location"));
+  t.ok(curl.includes("--max-time"));
+  t.ok(curl.includes("--insecure"));
+  t.end();
+});

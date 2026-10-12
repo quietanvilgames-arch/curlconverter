@@ -293,7 +293,15 @@ export function ob2ToCurlArgs(block: string): string[] {
 }
 
 export function fromOb2(block: string, output: Ob2Output): string {
-  const { args, settings } = parseOb2(block);
+  const { args, settings: parsedSettings } = parseOb2(block);
+  // Preserve the request defaults supplied by OB2 when a block omits them.
+  const settings: Ob2Settings = {
+    autoRedirect: true,
+    maxNumberOfRedirects: 8,
+    timeoutMilliseconds: 15000,
+    ignoreCertificateValidation: true,
+    ...parsedSettings,
+  };
   if (output === "curl" && settings.readResponseContent === false) {
     throw new CCError("cURL output cannot preserve readResponseContent = False");
   }
