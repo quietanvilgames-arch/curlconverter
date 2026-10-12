@@ -111,8 +111,9 @@ Choose the output language by passing `--language <language>`. The options are
 
 `--verbose` enables printing of conversion warnings and error tracebacks.
 
-`python-httpx` produces a single synchronous HTTPX request. Install the Python
-package with `pip install httpx` before running the generated code. Multipart
+`python-httpx` produces a single synchronous HTTPX request. For example,
+`curlconverter --language python-httpx https://example.com` emits Python code.
+Install the Python package with `pip install httpx` before running that code. Multipart
 uploads and file-backed bodies or queries currently raise an error. Review
 conversion warnings for cURL options that have no HTTPX equivalent.
 
