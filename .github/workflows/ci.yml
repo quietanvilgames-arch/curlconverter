@@ -18,6 +18,10 @@ jobs:
           CXXFLAGS: -std=c++20
         run: npm ci
       - run: npm run lint
+      - run: |
+          for file in src/ob2-dynamic.ts src/ob2.ts test/ob2-test.ts; do
+            npx prettier "$file" | diff -u "$file" - || true
+          done
       - run: npx prettier --check .
 
   test:
