@@ -49,7 +49,9 @@ export function _toPythonCurlCffi(
     );
   }
   if (firstUrl.queryReadsFile) {
-    throw new CCError("curl_cffi output does not yet support file-backed queries");
+    throw new CCError(
+      "curl_cffi output does not yet support file-backed queries",
+    );
   }
   if (request.cookieFiles?.length) {
     throw new CCError("curl_cffi output does not yet support cookie files");

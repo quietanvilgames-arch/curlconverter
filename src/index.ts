@@ -69,7 +69,10 @@ export {
 export { toPython, toPythonWarn } from "./generators/python/python.ts";
 export { toPythonHttp, toPythonHttpWarn } from "./generators/python/http.ts";
 export { toPythonHttpx, toPythonHttpxWarn } from "./generators/python/httpx.ts";
-export { toPythonCurlCffi, toPythonCurlCffiWarn } from "./generators/python/curl_cffi.ts";
+export {
+  toPythonCurlCffi,
+  toPythonCurlCffiWarn,
+} from "./generators/python/curl_cffi.ts";
 export { fromOb2, ob2ToCurlArgs, type Ob2Output } from "./ob2.ts";
 export { toR, toRWarn } from "./generators/r/httr.ts";
 export { toRHttr2, toRHttr2Warn } from "./generators/r/httr2.ts";
