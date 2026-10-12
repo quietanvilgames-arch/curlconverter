@@ -267,6 +267,9 @@ export function fromOb2(block: string, output: Ob2Output): string {
     settings.httpVersion !== undefined ||
     (output === "python-curl-cffi" &&
       settings.httpLibrary === "CurlImpersonate");
+  if (settings.httpVersion === "1.0" && output !== "curl") {
+    throw new CCError("This output cannot force HTTP/1.0");
+  }
   if (output === "python" && settings.httpVersion === "2.0") {
     throw new CCError("Python requests cannot force HTTP/2");
   }
@@ -293,7 +296,7 @@ export function fromOb2(block: string, output: Ob2Output): string {
     block,
   );
   const note =
-    profile && output !== "python-curl-cffi"
+    profile && (output !== "python-curl-cffi" || settings.httpLibrary !== "CurlImpersonate")
       ? (output === "go" ? "//" : "#") +
         " OB2 transport profile omitted; verify network behavior.\n"
       : "";
